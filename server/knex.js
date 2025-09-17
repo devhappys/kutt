@@ -32,7 +32,7 @@ db.isSQLite = isSQLite;
 db.isMySQL = isMySQL;
 
 // Custom ILIKE helper to avoid collation issues with MySQL utf8mb4
-db.compatibleILIKE = function(column, value) {
+db.compatibleILIKE = function (column, value) {
   if (isPostgres) {
     return "andWhereILike";
   } else if (isMySQL) {
@@ -44,7 +44,7 @@ db.compatibleILIKE = function(column, value) {
 }();
 
 // Helper function for MySQL case-insensitive LIKE without collation issues
-db.mysqlILike = function(query, column, value) {
+db.mysqlILike = function (query, column, value) {
   return query.andWhereRaw(`LOWER(${column}) LIKE LOWER(?)`, [value]);
 };
 
