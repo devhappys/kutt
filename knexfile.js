@@ -7,6 +7,7 @@ if (!process.env.JWT_SECRET) {
 const env = require("./server/env");
 
 const isSQLite = env.DB_CLIENT === "sqlite3" || env.DB_CLIENT === "better-sqlite3";
+const isMySQL = env.DB_CLIENT === "mysql" || env.DB_CLIENT === "mysql2";
 
 module.exports = {
   client: env.DB_CLIENT,
@@ -18,6 +19,10 @@ module.exports = {
     port: env.DB_PORT,
     password: env.DB_PASSWORD,
     ssl: env.DB_SSL,
+    ...(isMySQL && {
+      charset: 'utf8mb4',
+      collation: 'utf8mb4_unicode_ci'
+    }),
   },
   useNullAsDefault: true,
   migrations: {
