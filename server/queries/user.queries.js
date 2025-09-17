@@ -144,7 +144,7 @@ async function getAdmin(match, params) {
   if (params?.search) {
     const id = parseInt(params?.search);
     if (Number.isNaN(id)) {
-      query[knex.compatibleILIKE]("users.email", "%" + params?.search + "%");
+      knex.ilike(query, "users.email", "%" + params?.search + "%");
     } else {
       query.andWhere("users.id", params?.search);
     }
@@ -186,7 +186,7 @@ async function totalAdmin(match, params) {
   if (params?.search) {
     const id = parseInt(params?.search);
     if (Number.isNaN(id)) {
-      query[knex.compatibleILIKE]("users.email", "%" + params?.search + "%");
+      knex.ilike(query, "users.email", "%" + params?.search + "%");
     } else {
       query.andWhere("users.id", params?.search);
     }

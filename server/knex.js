@@ -31,21 +31,18 @@ db.isPostgres = isPostgres;
 db.isSQLite = isSQLite;
 db.isMySQL = isMySQL;
 
-// Custom ILIKE helper to avoid collation issues with MySQL utf8mb4
-db.compatibleILIKE = function (column, value) {
+// Helper function to handle case-insensitive LIKE queries without collation issues
+db.ilike = function(query, column, value) {
   if (isPostgres) {
-    return "andWhereILike";
+    return query.andWhereILike(column, value);
   } else if (isMySQL) {
-    // Use a custom method name that we'll handle in queries
-    return "andWhereRaw";
+    // Use LOWER() to avoid utf8_bin collation issues with utf8mb4
+    return query.andWhereRaw(`LOWER(${column}) LIKE LOWER(?)`, [value]);
   } else {
-    return "andWhereILike";
+    return query.andWhereILike(column, value);
   }
-}();
-
-// Helper function for MySQL case-insensitive LIKE without collation issues
-db.mysqlILike = function (query, column, value) {
-  return query.andWhereRaw(`LOWER(${column}) LIKE LOWER(?)`, [value]);
 };
+
+db.compatibleILIKE = "ilike"; // This will be used as a reference to our custom function
 
 module.exports = db;

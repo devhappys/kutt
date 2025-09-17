@@ -69,7 +69,7 @@ async function total(match, params) {
   });
 
   if (params?.search) {
-    query[knex.compatibleILIKE](
+    knex.ilike(query,
       knex.raw("concat_ws(' ', description, links.address, target, domains.address)"), 
       "%" + params.search + "%"
     );
@@ -92,21 +92,21 @@ async function totalAdmin(match, params) {
   if (params?.user) {
     const id = parseInt(params?.user);
     if (Number.isNaN(id)) {
-      query[knex.compatibleILIKE]("users.email", "%" + params.user + "%");
+      knex.ilike(query, "users.email", "%" + params.user + "%");
       } else {
       query.andWhere("links.user_id", params.user);
     }
   }
 
   if (params?.search) {
-    query[knex.compatibleILIKE](
+    knex.ilike(query,
       knex.raw("concat_ws(' ', description, links.address, target)"),
       "%" + params.search + "%"
     );
   }
 
   if (params?.domain) {
-    query[knex.compatibleILIKE]("domains.address", "%" + params.domain + "%");
+    knex.ilike(query, "domains.address", "%" + params.domain + "%");
   }
   
   query.leftJoin("domains", "links.domain_id", "domains.id");
@@ -127,7 +127,7 @@ async function get(match, params) {
     .orderBy("links.id", "desc");
   
   if (params?.search) {
-    query[knex.compatibleILIKE](
+    knex.ilike(query,
       knex.raw("concat_ws(' ', description, links.address, target, domains.address)"), 
       "%" + params.search + "%"
     );
@@ -153,21 +153,21 @@ async function getAdmin(match, params) {
   if (params?.user) {
     const id = parseInt(params?.user);
     if (Number.isNaN(id)) {
-      query[knex.compatibleILIKE]("users.email", "%" + params.user + "%");
+      knex.ilike(query, "users.email", "%" + params.user + "%");
     } else {
       query.andWhere("links.user_id", params.user);
     }
   }
 
   if (params?.search) {
-    query[knex.compatibleILIKE](
+    knex.ilike(query,
       knex.raw("concat_ws(' ', description, links.address, target)"),
       "%" + params.search + "%"
     );
   }
 
   if (params?.domain) {
-    query[knex.compatibleILIKE]("domains.address", "%" + params.domain + "%");
+    knex.ilike(query, "domains.address", "%" + params.domain + "%");
   }
   
   query.leftJoin("domains", "links.domain_id", "domains.id");
