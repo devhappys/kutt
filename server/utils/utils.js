@@ -105,8 +105,24 @@ function getDifferenceFunction(type) {
 }
 
 function parseDatetime(date) {
-  // because postgres and mysql return date, sqlite returns formatted iso 8601 string in utc
-  return date instanceof Date ? date : new Date(date + "Z");
+  if (date instanceof Date) {
+    return date;
+  }
+  
+  // Handle different database date formats with Shanghai timezone
+  if (knex.isMySQL) {
+    // MySQL returns datetime in 'YYYY-MM-DD HH:mm:ss' format
+    // Treat as Shanghai timezone (UTC+8)
+    const mysqlDate = date.replace(' ', 'T') + '+08:00';
+    return new Date(mysqlDate);
+  } else if (knex.isSQLite) {
+    // SQLite returns ISO 8601 string, treat as Shanghai timezone
+    const sqliteDate = date + '+08:00';
+    return new Date(sqliteDate);
+  } else {
+    // PostgreSQL returns proper Date objects or ISO strings
+    return new Date(date);
+  }
 }
 
 function parseTimestamps(item) {
@@ -117,20 +133,25 @@ function parseTimestamps(item) {
 }
 
 function dateToUTC(date) {
-  const dateUTC = date instanceof Date ? date.toISOString() : new Date(date).toISOString();
+  // Convert to Shanghai timezone (UTC+8)
+  const shanghaiDate = new Date(date);
+  const shanghaiOffset = 8 * 60; // UTC+8 in minutes
+  const localOffset = shanghaiDate.getTimezoneOffset();
+  const shanghaiTime = new Date(shanghaiDate.getTime() + (localOffset + shanghaiOffset) * 60000);
 
-  // format the utc date in 'YYYY-MM-DD hh:mm:ss' for SQLite
+  // format the Shanghai date in 'YYYY-MM-DD hh:mm:ss' for SQLite
   if (knex.isSQLite) {
-    return dateUTC.substring(0, 10) + " " + dateUTC.substring(11, 19);
+    const isoString = shanghaiTime.toISOString();
+    return isoString.substring(0, 10) + " " + isoString.substring(11, 19);
   }
   
-  // mysql doesn't save time in utc, so format the date in local timezone instead
+  // mysql saves time in local timezone, use Shanghai timezone
   if (knex.isMySQL) {
-    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
+    return format(shanghaiTime, "yyyy-MM-dd HH:mm:ss");
   }
   
-  // return unformatted utc string for postgres
-  return dateUTC;
+  // return Shanghai time as ISO string for postgres
+  return shanghaiTime.toISOString();
 }
 
 function getStatsPeriods(now) {
