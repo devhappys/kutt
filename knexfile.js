@@ -20,8 +20,7 @@ module.exports = {
     password: env.DB_PASSWORD,
     ssl: env.DB_SSL,
     ...(isMySQL && {
-      charset: 'utf8mb4',
-      collation: 'utf8mb4_unicode_ci'
+      charset: 'utf8mb4'
     }),
   },
   useNullAsDefault: true,
