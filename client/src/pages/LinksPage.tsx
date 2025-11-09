@@ -326,6 +326,23 @@ function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit
             {link.banned && (
               <span className="badge bg-red-100 text-red-800">Banned</span>
             )}
+            {link.max_clicks && (
+              <span className="badge bg-blue-100 text-blue-800 flex items-center gap-1" title={`Max ${link.max_clicks} clicks per ${link.click_limit_period || 'total'}`}>
+                🎯 {link.click_count_period || 0}/{link.max_clicks}
+              </span>
+            )}
+            {link.redirect_type === '301' && (
+              <span className="badge bg-green-100 text-green-800">301 Permanent</span>
+            )}
+            {link.redirect_type === '307' && (
+              <span className="badge bg-green-100 text-green-800">307</span>
+            )}
+            {link.public_stats && (
+              <span className="badge bg-indigo-100 text-indigo-800">📊 Public Stats</span>
+            )}
+            {!link.enable_analytics && (
+              <span className="badge bg-gray-100 text-gray-800">Analytics Off</span>
+            )}
           </div>
           <a
             href={link.target}
@@ -404,6 +421,7 @@ function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit
 
 function CreateLinkModal({ tags, onClose, onSuccess }: any) {
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false)
   const [formData, setFormData] = useState({
     target: '',
     customurl: '',
@@ -412,6 +430,18 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
     expire_in: '',
     reuse: false,
     tag_ids: [] as number[],
+    // Advanced features
+    max_clicks: '',
+    click_limit_period: 'total' as 'hour' | 'day' | 'week' | 'month' | 'total',
+    redirect_type: '302' as '301' | '302' | '307',
+    enable_analytics: true,
+    public_stats: false,
+    meta_title: '',
+    meta_description: '',
+    meta_image: '',
+    utm_campaign: '',
+    utm_source: '',
+    utm_medium: '',
   })
 
   const createLink = useMutation({
@@ -552,6 +582,166 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
             </div>
           </div>
 
+          {/* Advanced Features Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+          >
+            {showAdvancedFeatures ? '▼' : '▶'} Advanced Features (SEO, UTM, Click Limits)
+          </button>
+
+          {showAdvancedFeatures && (
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              {/* Click Limits */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Max Clicks (optional)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000000"
+                    value={formData.max_clicks}
+                    onChange={(e) => setFormData({ ...formData, max_clicks: e.target.value })}
+                    className="input"
+                    placeholder="e.g., 100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Limit total clicks for this link</p>
+                </div>
+                <div>
+                  <label className="label">Click Limit Period</label>
+                  <select
+                    value={formData.click_limit_period}
+                    onChange={(e) => setFormData({ ...formData, click_limit_period: e.target.value as any })}
+                    className="input"
+                    disabled={!formData.max_clicks}
+                  >
+                    <option value="hour">Per Hour</option>
+                    <option value="day">Per Day</option>
+                    <option value="week">Per Week</option>
+                    <option value="month">Per Month</option>
+                    <option value="total">Total (No Reset)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Redirect & Analytics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="label">Redirect Type</label>
+                  <select
+                    value={formData.redirect_type}
+                    onChange={(e) => setFormData({ ...formData, redirect_type: e.target.value as any })}
+                    className="input"
+                  >
+                    <option value="302">302 Temporary (Default)</option>
+                    <option value="301">301 Permanent (SEO)</option>
+                    <option value="307">307 Temporary (Keep Method)</option>
+                  </select>
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.enable_analytics}
+                      onChange={(e) => setFormData({ ...formData, enable_analytics: e.target.checked })}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <span className="text-sm">Enable Analytics</span>
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.public_stats}
+                      onChange={(e) => setFormData({ ...formData, public_stats: e.target.checked })}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <span className="text-sm">Public Statistics</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* SEO Meta Tags */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-gray-700">SEO Meta Tags (for social sharing)</h4>
+                <div>
+                  <label className="label">Meta Title</label>
+                  <input
+                    type="text"
+                    maxLength={200}
+                    value={formData.meta_title}
+                    onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                    className="input"
+                    placeholder="Custom title for previews"
+                  />
+                </div>
+                <div>
+                  <label className="label">Meta Description</label>
+                  <textarea
+                    maxLength={500}
+                    value={formData.meta_description}
+                    onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                    className="input resize-none"
+                    rows={2}
+                    placeholder="Custom description for previews"
+                  />
+                </div>
+                <div>
+                  <label className="label">Meta Image URL</label>
+                  <input
+                    type="url"
+                    value={formData.meta_image}
+                    onChange={(e) => setFormData({ ...formData, meta_image: e.target.value })}
+                    className="input"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+              </div>
+
+              {/* UTM Parameters */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-gray-700">UTM Parameters (auto-append to target URL)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="label">UTM Campaign</label>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={formData.utm_campaign}
+                      onChange={(e) => setFormData({ ...formData, utm_campaign: e.target.value })}
+                      className="input"
+                      placeholder="summer_sale"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">UTM Source</label>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={formData.utm_source}
+                      onChange={(e) => setFormData({ ...formData, utm_source: e.target.value })}
+                      className="input"
+                      placeholder="twitter"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">UTM Medium</label>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={formData.utm_medium}
+                      onChange={(e) => setFormData({ ...formData, utm_medium: e.target.value })}
+                      className="input"
+                      placeholder="social"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
               type="button"
@@ -583,8 +773,21 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
     password: '',
     removePassword: false,
     tag_ids: link.tags?.map((t: any) => t.id) || [] as number[],
+    // Advanced features
+    max_clicks: link.max_clicks || '',
+    click_limit_period: link.click_limit_period || 'total' as 'hour' | 'day' | 'week' | 'month' | 'total',
+    redirect_type: link.redirect_type || '302' as '301' | '302' | '307',
+    enable_analytics: link.enable_analytics !== undefined ? link.enable_analytics : true,
+    public_stats: link.public_stats || false,
+    meta_title: link.meta_title || '',
+    meta_description: link.meta_description || '',
+    meta_image: link.meta_image || '',
+    utm_campaign: link.utm_campaign || '',
+    utm_source: link.utm_source || '',
+    utm_medium: link.utm_medium || '',
   })
   const [showPasswordField, setShowPasswordField] = useState(false)
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false)
 
   const updateLink = useMutation({
     mutationFn: (data: any) => linksApi.update(link.id, data),
@@ -629,6 +832,41 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
         updateData.password = null
       } else if (formData.password) {
         updateData.password = formData.password
+      }
+      
+      // Handle advanced features
+      if (formData.max_clicks !== link.max_clicks) {
+        updateData.max_clicks = formData.max_clicks || null
+      }
+      if (formData.click_limit_period !== link.click_limit_period) {
+        updateData.click_limit_period = formData.click_limit_period
+      }
+      if (formData.redirect_type !== link.redirect_type) {
+        updateData.redirect_type = formData.redirect_type
+      }
+      if (formData.enable_analytics !== link.enable_analytics) {
+        updateData.enable_analytics = formData.enable_analytics
+      }
+      if (formData.public_stats !== link.public_stats) {
+        updateData.public_stats = formData.public_stats
+      }
+      if (formData.meta_title !== link.meta_title) {
+        updateData.meta_title = formData.meta_title || null
+      }
+      if (formData.meta_description !== link.meta_description) {
+        updateData.meta_description = formData.meta_description || null
+      }
+      if (formData.meta_image !== link.meta_image) {
+        updateData.meta_image = formData.meta_image || null
+      }
+      if (formData.utm_campaign !== link.utm_campaign) {
+        updateData.utm_campaign = formData.utm_campaign || null
+      }
+      if (formData.utm_source !== link.utm_source) {
+        updateData.utm_source = formData.utm_source || null
+      }
+      if (formData.utm_medium !== link.utm_medium) {
+        updateData.utm_medium = formData.utm_medium || null
       }
       
       const hasBasicChanges = Object.keys(updateData).length > 0
@@ -821,6 +1059,147 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
               )}
             </div>
           </div>
+
+          {/* Advanced Features Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+          >
+            {showAdvancedFeatures ? '▼' : '▶'} Advanced Features
+          </button>
+
+          {showAdvancedFeatures && (
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              {/* Click Limits */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Max Clicks</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000000"
+                    value={formData.max_clicks}
+                    onChange={(e) => setFormData({ ...formData, max_clicks: e.target.value })}
+                    className="input"
+                    placeholder="Leave empty for unlimited"
+                  />
+                </div>
+                <div>
+                  <label className="label">Click Limit Period</label>
+                  <select
+                    value={formData.click_limit_period}
+                    onChange={(e) => setFormData({ ...formData, click_limit_period: e.target.value as any })}
+                    className="input"
+                    disabled={!formData.max_clicks}
+                  >
+                    <option value="hour">Per Hour</option>
+                    <option value="day">Per Day</option>
+                    <option value="week">Per Week</option>
+                    <option value="month">Per Month</option>
+                    <option value="total">Total</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Redirect & Analytics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="label">Redirect Type</label>
+                  <select
+                    value={formData.redirect_type}
+                    onChange={(e) => setFormData({ ...formData, redirect_type: e.target.value as any })}
+                    className="input"
+                  >
+                    <option value="302">302 Temporary</option>
+                    <option value="301">301 Permanent</option>
+                    <option value="307">307 Keep Method</option>
+                  </select>
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.enable_analytics}
+                      onChange={(e) => setFormData({ ...formData, enable_analytics: e.target.checked })}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <span className="text-sm">Analytics</span>
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.public_stats}
+                      onChange={(e) => setFormData({ ...formData, public_stats: e.target.checked })}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <span className="text-sm">Public Stats</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* SEO Meta Tags */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">SEO Meta Tags</h4>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={formData.meta_title}
+                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                  className="input"
+                  placeholder="Meta Title"
+                />
+                <textarea
+                  maxLength={500}
+                  value={formData.meta_description}
+                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                  className="input resize-none"
+                  rows={2}
+                  placeholder="Meta Description"
+                />
+                <input
+                  type="url"
+                  value={formData.meta_image}
+                  onChange={(e) => setFormData({ ...formData, meta_image: e.target.value })}
+                  className="input"
+                  placeholder="Meta Image URL"
+                />
+              </div>
+
+              {/* UTM Parameters */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">UTM Parameters</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={formData.utm_campaign}
+                    onChange={(e) => setFormData({ ...formData, utm_campaign: e.target.value })}
+                    className="input"
+                    placeholder="Campaign"
+                  />
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={formData.utm_source}
+                    onChange={(e) => setFormData({ ...formData, utm_source: e.target.value })}
+                    className="input"
+                    placeholder="Source"
+                  />
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={formData.utm_medium}
+                    onChange={(e) => setFormData({ ...formData, utm_medium: e.target.value })}
+                    className="input"
+                    placeholder="Medium"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button

@@ -114,7 +114,13 @@ async function getAdmin(req, res) {
 };
 
 async function create(req, res) {
-  const { reuse, password, customurl, description, target, fetched_domain, expire_in } = req.body;
+  const { 
+    reuse, password, customurl, description, target, fetched_domain, expire_in,
+    // Advanced features
+    max_clicks, click_limit_period, redirect_type, enable_analytics, public_stats,
+    meta_title, meta_description, meta_image,
+    utm_campaign, utm_source, utm_medium
+  } = req.body;
   const domain_id = fetched_domain ? fetched_domain.id : null;
   
   const targetDomain = utils.removeWww(URL.parse(target).hostname);
@@ -149,9 +155,9 @@ async function create(req, res) {
     throw new CustomError(error);
   }
 
-  // Create new link
+  // Create new link with advanced features
   const address = customurl || tasks[2];
-  const link = await query.link.create({
+  const linkData = {
     password,
     address,
     domain_id,
@@ -159,7 +165,22 @@ async function create(req, res) {
     target,
     expire_in,
     user_id: req.user && req.user.id
-  });
+  };
+  
+  // Add advanced features if provided
+  if (max_clicks !== undefined) linkData.max_clicks = max_clicks;
+  if (click_limit_period) linkData.click_limit_period = click_limit_period;
+  if (redirect_type) linkData.redirect_type = redirect_type;
+  if (enable_analytics !== undefined) linkData.enable_analytics = enable_analytics;
+  if (public_stats !== undefined) linkData.public_stats = public_stats;
+  if (meta_title) linkData.meta_title = meta_title;
+  if (meta_description) linkData.meta_description = meta_description;
+  if (meta_image) linkData.meta_image = meta_image;
+  if (utm_campaign) linkData.utm_campaign = utm_campaign;
+  if (utm_source) linkData.utm_source = utm_source;
+  if (utm_medium) linkData.utm_medium = utm_medium;
+  
+  const link = await query.link.create(linkData);
 
   link.domain = fetched_domain?.address;
   
