@@ -10,6 +10,13 @@ const auth = require("../handlers/auth.handler");
 const router = Router();
 
 router.get(
+  "/",
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwt),
+  asyncHandler(domains.get)
+);
+
+router.get(
   "/admin",
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),

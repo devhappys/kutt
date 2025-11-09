@@ -642,13 +642,13 @@ function DomainsSection() {
   const { user } = useAuthStore()
   const [showAddModal, setShowAddModal] = useState(false)
 
-  // Refresh user data to get latest domains
-  useQuery({
+  // Get user's domains
+  const { data: domainsData } = useQuery({
     queryKey: ['user-domains'],
-    queryFn: () => authApi.getUser(),
+    queryFn: () => domainsApi.getAll(),
   })
 
-  const domains = user?.domains || []
+  const domains = domainsData?.data?.data || user?.domains || []
 
   const deleteDomain = useMutation({
     mutationFn: domainsApi.remove,

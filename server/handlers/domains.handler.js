@@ -6,6 +6,14 @@ const redis = require("../redis");
 const utils = require("../utils");
 const env = require("../env");
 
+async function get(req, res) {
+  const domains = await query.domain.get({ user_id: req.user.id });
+
+  return res.status(200).send({
+    data: domains.map(sanitize.domain)
+  });
+}
+
 async function add(req, res) {
   const { address, homepage } = req.body;
 
@@ -204,6 +212,7 @@ async function ban(req, res) {
 }
 
 module.exports = {
+  get,
   add,
   addAdmin,
   ban,

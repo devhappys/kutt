@@ -220,6 +220,8 @@ export const securityApi = {
 
 // ==================== Domains API ====================
 export const domainsApi = {
+  getAll: () => api.get('/domains'),
+  
   add: (data: { address: string; homepage?: string }) =>
     api.post('/domains', data),
   
