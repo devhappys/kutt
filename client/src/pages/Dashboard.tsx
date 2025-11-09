@@ -134,7 +134,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <Link
-                        to={`/app/links/${link.uuid}/stats`}
+                        to={`/app/links/${link.id}/stats`}
                         className="btn-secondary p-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <BarChart3 className="h-4 w-4" />

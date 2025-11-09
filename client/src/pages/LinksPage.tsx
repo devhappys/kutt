@@ -228,21 +228,21 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }: any) {
             <Edit className="h-4 w-4" />
           </button>
           <button
-            onClick={() => onShowQR(link.uuid)}
+            onClick={() => onShowQR(link.id)}
             className="btn-secondary p-2"
             title="Generate QR code"
           >
             <QrCode className="h-4 w-4" />
           </button>
           <RouterLink
-            to={`/app/links/${link.uuid}/stats`}
+            to={`/app/links/${link.id}/stats`}
             className="btn-secondary p-2"
             title="View stats"
           >
             <BarChart3 className="h-4 w-4" />
           </RouterLink>
           <button
-            onClick={() => onDelete(link.uuid)}
+            onClick={() => onDelete(link.id)}
             className="btn-danger p-2"
             title="Delete link"
           >
@@ -440,7 +440,7 @@ function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
   })
 
   const updateLink = useMutation({
-    mutationFn: (data: any) => linksApi.update(link.uuid, data),
+    mutationFn: (data: any) => linksApi.update(link.id, data),
     onSuccess: () => {
       toast.success('Link updated!')
       onSuccess()
