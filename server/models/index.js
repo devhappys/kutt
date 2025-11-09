@@ -5,4 +5,6 @@ module.exports = {
   ...require("./link.model"),
   ...require("./user.model"),
   ...require("./visit.model"),
+  ...require("./visit_detail.model"),
+  ...require("./tag.model"),
 }

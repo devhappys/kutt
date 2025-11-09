@@ -30,12 +30,20 @@ async function get(req, res) {
     query.link.total(match, { search })
   ]);
 
+  // Add tags to each link
+  const linksWithTags = await Promise.all(
+    data.map(async link => {
+      const tags = await query.tag.getByLinkId(link.id);
+      return { ...link, tags };
+    })
+  );
+
   if (req.isHTML) {
     res.render("partials/links/table", {
       total,
       limit,
       skip,
-      links: data.map(utils.sanitize.link_html),
+      links: linksWithTags.map(utils.sanitize.link_html),
     })
     return;
   }
@@ -44,7 +52,7 @@ async function get(req, res) {
     total,
     limit,
     skip,
-    data: data.map(utils.sanitize.link),
+    data: linksWithTags.map(utils.sanitize.link),
   });
 };
 
@@ -75,7 +83,15 @@ async function getAdmin(req, res) {
     query.link.totalAdmin(match, { search, user, domain })
   ]);
 
-  const links = data.map(utils.sanitize.link_admin);
+  // Add tags to each link
+  const linksWithTags = await Promise.all(
+    data.map(async link => {
+      const tags = await query.tag.getByLinkId(link.id);
+      return { ...link, tags };
+    })
+  );
+
+  const links = linksWithTags.map(utils.sanitize.link_admin);
 
   if (req.isHTML) {
     res.render("partials/admin/links/table", {
@@ -146,6 +162,18 @@ async function create(req, res) {
 
   link.domain = fetched_domain?.address;
   
+  // Add tags if provided
+  if (req.body.tag_ids && Array.isArray(req.body.tag_ids) && req.body.tag_ids.length > 0) {
+    try {
+      await query.tag.addToLink(link.id, req.body.tag_ids);
+    } catch (err) {
+      // Ignore tag errors for link creation
+    }
+  }
+  
+  // Get tags for response
+  link.tags = await query.tag.getByLinkId(link.id);
+  
   if (req.isHTML) {
     res.setHeader("HX-Trigger", "reloadMainTable");
     const shortURL = utils.getShortURL(link.address, link.domain);
@@ -158,7 +186,7 @@ async function create(req, res) {
   return res
     .status(201)
     .send(utils.sanitize.link({ ...link }));
-}
+};
 
 async function edit(req, res) {
   const link = await query.link.find({

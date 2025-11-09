@@ -8,6 +8,9 @@ const health = require("./health.routes");
 const link = require("./link.routes");
 const user = require("./user.routes");
 const auth = require("./auth.routes");
+const tag = require("./tag.routes");
+const qrcode = require("./qrcode.routes");
+const stats = require("./stats.routes");
 
 const renderRouter = Router();
 renderRouter.use(renders);
@@ -19,6 +22,9 @@ apiRouter.use("/health", health);
 apiRouter.use("/links", link);
 apiRouter.use("/users", user);
 apiRouter.use("/auth", auth);
+apiRouter.use("/tags", tag);
+apiRouter.use("/qrcode", qrcode);
+apiRouter.use("/stats", stats);
 
 module.exports = {
   api: apiRouter,
