@@ -350,6 +350,18 @@ const sanitize = {
       relative_created_at: getTimeAgo(timestamps.created_at),
       relative_updated_at: getTimeAgo(timestamps.updated_at),
     }
+  },
+  user: user => {
+    const timestamps = parseTimestamps(user);
+    return {
+      id: user.id,
+      email: user.email,
+      verified: user.verified,
+      banned: !!user.banned,
+      role: user.role,
+      created_at: timestamps.created_at,
+      updated_at: timestamps.updated_at,
+    }
   }
 };
 

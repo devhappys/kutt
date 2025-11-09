@@ -11,7 +11,6 @@ const router = Router();
 
 router.get(
   "/admin",
-  locals.viewTemplate("partials/admin/domains/table"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -22,7 +21,6 @@ router.get(
 
 router.post(
   "/",
-  locals.viewTemplate("partials/settings/domain/add_form"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   validators.addDomain,
@@ -32,7 +30,6 @@ router.post(
 
 router.post(
   "/admin",
-  locals.viewTemplate("partials/admin/dialog/add_domain"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -43,7 +40,6 @@ router.post(
 
 router.delete(
   "/:id",
-  locals.viewTemplate("partials/settings/domain/delete"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   validators.removeDomain,
@@ -53,7 +49,6 @@ router.delete(
 
 router.delete(
   "/admin/:id",
-  locals.viewTemplate("partials/admin/dialog/delete_domain"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -64,7 +59,6 @@ router.delete(
 
 router.post(
   "/admin/ban/:id",
-  locals.viewTemplate("partials/admin/dialog/ban_domain"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),

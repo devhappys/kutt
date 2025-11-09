@@ -12,7 +12,6 @@ const router = Router();
 
 router.post(
   "/login",
-  locals.viewTemplate("partials/auth/form"),
   validators.login,
   asyncHandler(helpers.verify),
   helpers.rateLimit({ window: 60, limit: 5 }),
@@ -22,7 +21,6 @@ router.post(
 
 router.post(
   "/signup",
-  locals.viewTemplate("partials/auth/form"),
   auth.featureAccess([!env.DISALLOW_REGISTRATION, env.MAIL_ENABLED]),
   validators.signup,
   asyncHandler(helpers.verify),
@@ -34,7 +32,6 @@ router.post(
 
 router.post(
   "/create-admin",
-  locals.viewTemplate("partials/auth/form_admin"),
   validators.createAdmin,
   asyncHandler(helpers.verify),
   helpers.rateLimit({ window: 60, limit: 5 }),
@@ -43,7 +40,6 @@ router.post(
 
 router.post(
   "/change-password",
-  locals.viewTemplate("partials/settings/change_password"),
   asyncHandler(auth.jwt),
   validators.changePassword,
   asyncHandler(helpers.verify),
@@ -53,7 +49,6 @@ router.post(
 
 router.post(
   "/change-email",
-  locals.viewTemplate("partials/settings/change_email"),
   asyncHandler(auth.jwt),
   auth.featureAccess([env.MAIL_ENABLED]),
   validators.changeEmail,
@@ -64,7 +59,6 @@ router.post(
 
 router.post(
   "/apikey",
-  locals.viewTemplate("partials/settings/apikey"),
   asyncHandler(auth.jwt),
   helpers.rateLimit({ window: 60, limit: 10 }),
   asyncHandler(auth.generateApiKey)
@@ -72,7 +66,6 @@ router.post(
 
 router.post(
   "/reset-password",
-  locals.viewTemplate("partials/reset_password/request_form"),
   auth.featureAccess([env.MAIL_ENABLED]),
   validators.resetPassword,
   asyncHandler(helpers.verify),
@@ -82,7 +75,6 @@ router.post(
 
 router.post(
   "/new-password",
-  locals.viewTemplate("partials/reset_password/new_password_form"),
   locals.newPassword,
   validators.newPassword,
   asyncHandler(helpers.verify),

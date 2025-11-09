@@ -95,14 +95,22 @@ async function signup(req, res) {
     req.user
   );
   
-  await mail.verification(user);
+  // Generate API key for new user
+  const apikey = nanoid(40);
+  const updatedUser = await query.user.update({ email: user.email }, { apikey });
+  
+  await mail.verification(updatedUser);
 
   if (req.isHTML) {
     res.render("partials/auth/verify");
     return;
   }
   
-  return res.status(201).send({ message: "A verification email has been sent." });
+  return res.status(201).send({ 
+    message: "A verification email has been sent.",
+    user: utils.sanitize.user(updatedUser),
+    apikey 
+  });
 }
 
 async function createAdminUser(req, res) {
@@ -132,8 +140,16 @@ async function createAdminUser(req, res) {
   return res.status(201).send({ token });
 }
 
-function login(req, res) {
+async function login(req, res) {
   const token = utils.signToken(req.user);
+  
+  let user = req.user;
+  
+  // Generate API key if user doesn't have one
+  if (!user.apikey) {
+    const apikey = nanoid(40);
+    user = await query.user.update({ id: user.id }, { apikey });
+  }
 
   if (req.isHTML) {
     utils.setToken(res, token);
@@ -141,7 +157,11 @@ function login(req, res) {
     return;
   }
   
-  return res.status(200).send({ token });
+  return res.status(200).send({ 
+    token,
+    user: utils.sanitize.user(user),
+    apikey: user.apikey 
+  });
 }
 
 async function verify(req, res, next) {

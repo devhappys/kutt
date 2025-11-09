@@ -13,7 +13,6 @@ const router = Router();
 
 router.get(
   "/",
-  locals.viewTemplate("partials/links/table"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   helpers.parseQuery,
@@ -22,7 +21,6 @@ router.get(
 
 router.get(
   "/admin",
-  locals.viewTemplate("partials/admin/links/table"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -34,7 +32,6 @@ router.get(
 router.post(
   "/",
   cors(),
-  locals.viewTemplate("partials/shortener"),
   asyncHandler(auth.apikey),
   asyncHandler(env.DISALLOW_ANONYMOUS_LINKS ? auth.jwt : auth.jwtLoose),
   locals.createLink,
@@ -45,7 +42,6 @@ router.post(
 
 router.patch(
   "/:id",
-  locals.viewTemplate("partials/links/edit"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   locals.editLink,
@@ -56,7 +52,6 @@ router.patch(
 
 router.patch(
   "/admin/:id",
-  locals.viewTemplate("partials/links/edit"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -68,7 +63,6 @@ router.patch(
 
 router.delete(
   "/:id",
-  locals.viewTemplate("partials/links/dialog/delete"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   validators.deleteLink,
@@ -78,7 +72,6 @@ router.delete(
 
 router.post(
   "/admin/ban/:id",
-  locals.viewTemplate("partials/links/dialog/ban"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -89,7 +82,6 @@ router.post(
 
 router.get(
   "/:id/stats",
-  locals.viewTemplate("partials/stats"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   validators.getStats,
@@ -99,7 +91,6 @@ router.get(
 
 router.post(
   "/:id/protected",
-  locals.viewTemplate("partials/protected/form"),
   locals.protected,
   validators.redirectProtected,
   asyncHandler(helpers.verify),
@@ -108,7 +99,6 @@ router.post(
 
 router.post(
   "/report",
-  locals.viewTemplate("partials/report/form"),
   auth.featureAccess([env.MAIL_ENABLED]),
   validators.reportLink,
   asyncHandler(helpers.verify),

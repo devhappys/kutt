@@ -18,7 +18,6 @@ router.get(
 
 router.get(
   "/admin",
-  locals.viewTemplate("partials/admin/users/table"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -29,7 +28,6 @@ router.get(
 
 router.post(
   "/admin",
-  locals.viewTemplate("partials/admin/dialog/create_user"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -40,7 +38,6 @@ router.post(
 
 router.post(
   "/delete",
-  locals.viewTemplate("partials/settings/delete_account"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   validators.deleteUser,
@@ -50,7 +47,6 @@ router.post(
 
 router.delete(
   "/admin/:id",
-  locals.viewTemplate("partials/admin/dialog/delete_user"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),
@@ -61,7 +57,6 @@ router.delete(
 
 router.post(
   "/admin/ban/:id",
-  locals.viewTemplate("partials/admin/dialog/ban_user"),
   asyncHandler(auth.apikey),
   asyncHandler(auth.jwt),
   asyncHandler(auth.admin),

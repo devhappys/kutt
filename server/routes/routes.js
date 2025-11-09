@@ -17,6 +17,11 @@ const renderRouter = Router();
 renderRouter.use(renders);
 
 const apiRouter = Router();
+// Force API routes to return JSON instead of HTML
+apiRouter.use((req, res, next) => {
+  req.isHTML = false;
+  next();
+});
 apiRouter.use(locals.noLayout);
 apiRouter.use("/domains", domains);
 apiRouter.use("/health", health);
