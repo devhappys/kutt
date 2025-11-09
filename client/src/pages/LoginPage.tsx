@@ -175,9 +175,12 @@ export default function LoginPage() {
             {isLogin && (
               <p className="text-sm text-gray-600">
                 Forgot your password?{' '}
-                <button className="font-medium text-primary-600 hover:text-primary-700">
+                <Link 
+                  to="/reset-password" 
+                  className="font-medium text-primary-600 hover:text-primary-700"
+                >
                   Reset it
-                </button>
+                </Link>
               </p>
             )}
           </div>
