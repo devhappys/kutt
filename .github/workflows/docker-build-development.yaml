@@ -85,7 +85,7 @@ jobs:
 
       - name: Install Node.js dependencies
         run: |
-          pnpm install ssh2 dotenv axios
+          pnpm install ssh2 dotenv axios form-data
 
       - name: Run deployment script
         if: github.event_name != 'pull_request'
