@@ -25,6 +25,26 @@ const db = knex({
     }
   },
   useNullAsDefault: true,
+  log: {
+    warn(message) {
+      // Suppress MySQL .returning() warnings as it's expected behavior
+      if (message && message.includes('.returning() is not supported')) {
+        return;
+      }
+      console.warn(message);
+    },
+    error(message) {
+      console.error(message);
+    },
+    deprecate(message) {
+      console.warn(message);
+    },
+    debug(message) {
+      if (env.DEBUG_SQL) {
+        console.debug(message);
+      }
+    }
+  }
 });
 
 db.isPostgres = isPostgres;
@@ -44,5 +64,26 @@ db.ilike = function(query, column, value) {
 };
 
 db.compatibleILIKE = "ilike"; // This will be used as a reference to our custom function
+
+/**
+ * Cross-database compatible insert that handles RETURNING differences
+ * Returns the inserted record(s)
+ * @param {string} tableName - Name of the table
+ * @param {Object|Array} data - Data to insert
+ * @param {Array|string} returning - Columns to return (ignored in MySQL)
+ * @returns {Promise} - The inserted record(s)
+ */
+db.insertAndReturn = async function(tableName, data, returning = '*') {
+  if (isPostgres) {
+    // PostgreSQL supports RETURNING
+    const [result] = await this(tableName).insert(data).returning(returning);
+    return result;
+  } else {
+    // MySQL and SQLite: insert then select
+    const [id] = await this(tableName).insert(data);
+    const insertedId = typeof id === 'number' ? id : id.id;
+    return await this(tableName).where('id', insertedId).first();
+  }
+};
 
 module.exports = db;

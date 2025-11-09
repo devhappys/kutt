@@ -15,10 +15,18 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'https://surl-api.hapxs.com',
+        target: process.env.VITE_API_URL || 'https://s.hapxs.com',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy error:', err)
+          })
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Proxying:', req.method, req.url)
+          })
+        },
       },
     },
   },

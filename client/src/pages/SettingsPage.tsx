@@ -296,7 +296,7 @@ function SecuritySection() {
   })
 
   const changePassword = useMutation({
-    mutationFn: (data: { currentpassword: string; newpassword: string }) => 
+    mutationFn: (data: { currentpassword: string; newpassword: string }) =>
       authApi.changePassword(data),
     onSuccess: () => {
       toast.success('Password changed successfully')
@@ -417,15 +417,15 @@ function TwoFactorAuthSection() {
   const [showSetupModal, setShowSetupModal] = useState(false)
   const [showDisableModal, setShowDisableModal] = useState(false)
   const [showBackupCodesModal, setShowBackupCodesModal] = useState(false)
-  
+
   const { data: statusData, refetch: refetchStatus } = useQuery({
     queryKey: ['twofa-status'],
     queryFn: () => authApi.twofa.getStatus(),
   })
-  
+
   const enabled = statusData?.data?.enabled || false
   const backupCodesCount = statusData?.data?.backupCodesCount || 0
-  
+
   return (
     <>
       <div className="card mt-6">
@@ -480,7 +480,7 @@ function TwoFactorAuthSection() {
             )}
           </div>
         </div>
-        
+
         {!enabled && (
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-start gap-3">
@@ -1143,7 +1143,7 @@ function BackupCodesModal({ onClose, onRefresh }: { onClose: () => void; onRefre
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'kutt-backup-codes.txt'
+    a.download = 'hapxs-surl-backup-codes.txt'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

@@ -26,10 +26,32 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network Error:', error.message)
+      // Check if it's a connection error
+      if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        error.userMessage = 'Cannot connect to server. Please check if the backend is running.'
+      }
+      return Promise.reject(error)
+    }
+
+    // Handle HTTP errors
+    const status = error.response?.status
+    
+    if (status === 401) {
       localStorage.removeItem('apiKey')
       window.location.href = '/login'
+    } else if (status === 502) {
+      error.userMessage = 'Backend server is unavailable (502). Please check if the server is running.'
+      console.error('502 Bad Gateway - Backend server not responding')
+    } else if (status === 503) {
+      error.userMessage = error.response?.data?.message || 'Service temporarily unavailable'
+    } else if (status >= 500) {
+      error.userMessage = 'Server error. Please try again later.'
+      console.error('Server Error:', error.response?.data)
     }
+    
     return Promise.reject(error)
   }
 )

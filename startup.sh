@@ -56,7 +56,7 @@ check_package_json() {
 # Trap errors and display logs before exiting
 trap 'EXIT_CODE=$?; if [ $EXIT_CODE -ne 0 ]; then display_npm_error_logs; fi; exit $EXIT_CODE' EXIT
 
-echo "Starting Kutt application..."
+echo "Starting Hapxs SUrl application..."
 echo "Working directory: $(pwd)"
 echo ""
 
