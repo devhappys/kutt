@@ -7,7 +7,7 @@ on:
       - dev
     paths-ignore:
       - .github/**
-      - "!.github/workflows/docker.yml"
+      - "!.github/workflows/docker-build-development"
   workflow_dispatch:
 
 permissions:
@@ -78,9 +78,14 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Install Node.js dependencies
         run: |
-          npm install ssh2 dotenv axios
+          pnpm install ssh2 dotenv axios
 
       - name: Set script permissions
         run: |
