@@ -14,9 +14,9 @@ const env = require('../env');
 const CustomError = utils.CustomError;
 
 // Configuration for WebAuthn
-const rpName = env.SITE_NAME || 'Kutt';
-const rpID = env.PASSKEY_RP_ID || process.env.PASSKEY_RP_ID || 'localhost';
-const origin = env.PASSKEY_ORIGIN || process.env.PASSKEY_ORIGIN || `http://localhost:${env.PORT || 3000}`;
+const rpName = env.SITE_NAME;
+const rpID = env.PASSKEY_RP_ID;
+const origin = env.PASSKEY_ORIGIN;
 
 // Store challenges temporarily (in production, use Redis)
 const challenges = new Map();

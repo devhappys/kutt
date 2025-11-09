@@ -67,6 +67,8 @@ const spec = {
   CONTACT_EMAIL: str({ default: "" }),
   NODE_APP_INSTANCE: num({ default: 0 }),
   DEBUG_SQL: bool({ default: false }),
+  PASSKEY_RP_ID: str({ default: "localhost", example: "yourdomain.com" }),
+  PASSKEY_ORIGIN: str({ default: "http://localhost:3000", example: "https://yourdomain.com" }),
 };
 
 for (const key in spec) {
