@@ -114,7 +114,7 @@ docker compose build
 ### 2. 运行迁移
 
 ```bash
-docker compose run --rm kutt npm run migrate
+docker compose run --rm hapxs-surl npm run migrate
 ```
 
 ### 3. 启动服务
@@ -125,7 +125,7 @@ docker compose up -d
 
 ## 🔄 从旧版本升级
 
-如果您已经在运行 Kutt，升级步骤如下：
+如果您已经在运行 hapxs-surl，升级步骤如下：
 
 1. **备份数据库**（重要！）
 ```bash
@@ -133,10 +133,10 @@ docker compose up -d
 cp db/data.db db/data.db.backup
 
 # PostgreSQL
-pg_dump -U your_user kutt > kutt_backup.sql
+pg_dump -U your_user hapxs-surl > hapxs-surl_backup.sql
 
 # MySQL
-mysqldump -u your_user -p kutt > kutt_backup.sql
+mysqldump -u your_user -p hapxs-surl > hapxs-surl_backup.sql
 ```
 
 2. **拉取最新代码**
@@ -157,10 +157,10 @@ npm run migrate
 5. **重启应用**
 ```bash
 # 如果使用 PM2
-pm2 restart kutt
+pm2 restart hapxs-surl
 
 # 如果使用 systemd
-sudo systemctl restart kutt
+sudo systemctl restart hapxs-surl
 
 # 如果使用 Docker
 docker compose restart
@@ -249,13 +249,13 @@ npm install qrcode
 ## 📚 相关文档
 
 - [功能使用文档](./FEATURES.md)
-- [API 文档](https://docs.kutt.it)
+- [API 文档](https://docs.hapxs-surl.it)
 - [主 README](./README.md)
 
 ## 🆘 获取帮助
 
 如果遇到问题：
-1. 查看 [GitHub Issues](https://github.com/thedevs-network/kutt/issues)
+1. 查看 [GitHub Issues](https://github.com/devhappys/hapxs-surl/issues)
 2. 提交新的 Issue，包含详细的错误信息
 3. 加入社区讨论
 

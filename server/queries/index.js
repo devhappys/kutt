@@ -5,6 +5,7 @@ const user = require("./user.queries");
 const host = require("./host.queries");
 const tag = require("./tag.queries");
 const stats = require("./stats.queries");
+const security = require("./security.queries");
 
 module.exports = {
   domain,
@@ -13,5 +14,6 @@ module.exports = {
   user,
   visit,
   tag,
-  stats
+  stats,
+  security
 };

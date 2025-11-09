@@ -12,6 +12,7 @@ const query = require("../queries");
 const queue = require("../queues");
 const utils = require("../utils");
 const env = require("../env");
+const redirectMiddleware = require("../middleware/redirect.middleware");
 
 const CustomError = utils.CustomError;
 const dnsLookup = promisify(dns.lookup);
@@ -530,7 +531,14 @@ async function redirect(req, res, next) {
     return res.send({ target: link.target });
   }
 
-  // 6. If link is protected, redirect to password page
+  // 6. Apply security and smart redirect checks
+  const securityResult = await redirectMiddleware.applySecurityAndSmartRedirect(req, res, next, link);
+  if (securityResult !== null) {
+    // Security check handled the response (blocked or smart redirected)
+    return;
+  }
+
+  // 7. If link is protected, redirect to password page
   if (link.password) {
     if ("authorization" in req.headers) {
       const auth = req.headers.authorization;
@@ -556,7 +564,7 @@ async function redirect(req, res, next) {
     return;
   }
 
-  // 7. Create link visit
+  // 8. Create link visit
   const isBot = isbot(req.headers["user-agent"]);
   if (link.user_id && !isBot) {
     queue.visit.add({
@@ -568,7 +576,7 @@ async function redirect(req, res, next) {
     });
   }
 
-  // 8. Redirect to target
+  // 9. Redirect to target
   return res.redirect(link.target);
 };
 

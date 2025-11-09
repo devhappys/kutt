@@ -41,7 +41,7 @@ function verify(req, res, next) {
 
   const errors = result.array();
   const error = errors[0].msg;
-  
+
   res.locals.errors = {};
   errors.forEach(e => {
     if (res.locals.errors[e.param]) return;
@@ -87,18 +87,18 @@ function parseQuery(req, res, next) {
 
 function rateLimit(params) {
   if (!env.ENABLE_RATE_LIMIT) {
-    return function(req, res, next) {
+    return function (req, res, next) {
       return next();
     }
   }
-  
+
   let store = undefined;
   if (env.REDIS_ENABLED) {
     store = new RateLimitRedisStore({
       sendCommand: (...args) => redis.client.call(...args),
     })
   }
-  
+
   return expressRateLimit({
     windowMs: params.window * 1000,
     validate: { trustProxy: false },
@@ -111,10 +111,10 @@ function rateLimit(params) {
       }
       return params.limit;
     },
-    keyGenerator: function(req, res) {
+    keyGenerator: function (req, res) {
       return "rl:" + req.method + req.baseUrl + req.path + ":" + req.ip;
     },
-    requestWasSuccessful: function(req, res) {
+    requestWasSuccessful: function (req, res) {
       return !res.locals.error && res.statusCode < 400;
     },
     handler: function (req, res, next, options) {
@@ -123,7 +123,7 @@ function rateLimit(params) {
   });
 }
 
-// redirect to create admin page if the kutt instance is ran for the first time
+// redirect to create admin page if the hapxs-surl instance is ran for the first time
 async function adminSetup(req, res, next) {
   const isThereAUser = req.user || (await query.user.findAny());
   if (isThereAUser) {

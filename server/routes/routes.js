@@ -11,6 +11,7 @@ const auth = require("./auth.routes");
 const tag = require("./tag.routes");
 const qrcode = require("./qrcode.routes");
 const stats = require("./stats.routes");
+const security = require("./security.routes");
 
 const renderRouter = Router();
 renderRouter.use(renders);
@@ -25,6 +26,7 @@ apiRouter.use("/auth", auth);
 apiRouter.use("/tags", tag);
 apiRouter.use("/qrcode", qrcode);
 apiRouter.use("/stats", stats);
+apiRouter.use("/security", security);
 
 module.exports = {
   api: apiRouter,

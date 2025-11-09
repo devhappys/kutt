@@ -3,10 +3,10 @@ services:
     build:
       context: .
     volumes:
-      - db_data_sqlite:/var/lib/kutt
-      - custom:/kutt/custom
+      - db_data_sqlite:/var/lib/hapxs-surl
+      - custom:/hapxs-surl/custom
     environment:
-      DB_FILENAME: "/var/lib/kutt/data.sqlite"
+      DB_FILENAME: "/var/lib/hapxs-surl/data.sqlite"
       REDIS_ENABLED: true
       REDIS_HOST: redis
       REDIS_PORT: 6379

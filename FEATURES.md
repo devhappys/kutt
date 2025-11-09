@@ -145,7 +145,7 @@ GET /api/v2/qrcode/:linkId?format=dataurl&size=300
 ```json
 {
   "data_url": "data:image/png;base64,iVBORw0KGgoAAAANSUh...",
-  "link": "https://kutt.it/abc123"
+  "link": "https://hapxs-surl.com/abc123"
 }
 ```
 
@@ -181,7 +181,7 @@ Content-Type: application/json
       "link_id": "uuid1",
       "address": "abc123",
       "data_url": "data:image/png;base64,iVBORw0KG...",
-      "link": "https://kutt.it/abc123"
+      "link": "https://hapxs-surl.com/abc123"
     },
     {
       "link_id": "uuid2",
@@ -204,7 +204,7 @@ Content-Type: application/json
 ```javascript
 // 创建标签
 const createTag = async () => {
-  const response = await fetch('https://kutt.it/api/v2/tags', {
+  const response = await fetch('https://hapxs-surl.com/api/v2/tags', {
     method: 'POST',
     headers: {
       'X-API-KEY': 'your-api-key',
@@ -221,7 +221,7 @@ const createTag = async () => {
 
 // 创建带标签的链接
 const createLinkWithTags = async () => {
-  const response = await fetch('https://kutt.it/api/v2/links', {
+  const response = await fetch('https://hapxs-surl.com/api/v2/links', {
     method: 'POST',
     headers: {
       'X-API-KEY': 'your-api-key',
@@ -240,7 +240,7 @@ const createLinkWithTags = async () => {
 // 生成 QR 码
 const generateQRCode = async (linkId) => {
   const response = await fetch(
-    `https://kutt.it/api/v2/qrcode/${linkId}?format=dataurl&size=400`,
+    `https://hapxs-surl.com/api/v2/qrcode/${linkId}?format=dataurl&size=400`,
     {
       headers: {
         'X-API-KEY': 'your-api-key'
@@ -260,7 +260,7 @@ const generateQRCode = async (linkId) => {
 import requests
 
 API_KEY = 'your-api-key'
-BASE_URL = 'https://kutt.it/api/v2'
+BASE_URL = 'https://hapxs-surl.com/api/v2'
 HEADERS = {'X-API-KEY': API_KEY}
 
 # 创建标签
@@ -295,20 +295,20 @@ def download_qrcode(link_id, filename='qrcode.png'):
 
 ```bash
 # 创建标签
-curl -X POST https://kutt.it/api/v2/tags \
+curl -X POST https://hapxs-surl.com/api/v2/tags \
   -H "X-API-KEY: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{"name":"工作","color":"#3b82f6"}'
 
 # 创建带标签的链接
-curl -X POST https://kutt.it/api/v2/links \
+curl -X POST https://hapxs-surl.com/api/v2/links \
   -H "X-API-KEY: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{"target":"https://example.com","tag_ids":[1,2]}'
 
 # 下载 QR 码
 curl -o qrcode.png \
-  "https://kutt.it/api/v2/qrcode/LINK_UUID?format=png&size=500" \
+  "https://hapxs-surl.com/api/v2/qrcode/LINK_UUID?format=png&size=500" \
   -H "X-API-KEY: your-api-key"
 ```
 
@@ -375,5 +375,5 @@ npm run migrate
 ## 📚 更多信息
 
 如有问题或建议，请访问：
-- GitHub Issues: https://github.com/thedevs-network/kutt/issues
-- API 文档: https://docs.kutt.it
+- GitHub Issues: https://github.com/devhappys/hapxs-surl/issues
+- API 文档: https://docs.hapxs-surl.it

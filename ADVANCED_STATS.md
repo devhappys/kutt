@@ -2,7 +2,7 @@
 
 ## 📊 功能概述
 
-高级统计功能为 Kutt 提供了强大的数据分析能力，包括详细的访问记录、UTM 参数追踪、实时统计、转化漏斗分析等。
+高级统计功能为 hapxs-surl 提供了强大的数据分析能力，包括详细的访问记录、UTM 参数追踪、实时统计、转化漏斗分析等。
 
 ### 主要功能
 
@@ -462,7 +462,7 @@ created_at,country,city,browser,browser_version,os,device_type,utm_campaign,utm_
 
 **示例：**
 ```bash
-curl -X POST https://kutt.it/api/v2/links \
+curl -X POST https://hapxs-surl.com/api/v2/links \
   -H "X-API-KEY: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -509,7 +509,7 @@ for (const channel of channels) {
 
 // 查看各渠道效果
 const utmStats = await fetch(
-  'https://kutt.it/api/v2/stats/links/LINK_ID/utm',
+  'https://hapxs-surl.com/api/v2/stats/links/LINK_ID/utm',
   { headers: { 'X-API-KEY': 'your-api-key' } }
 );
 ```
@@ -532,7 +532,7 @@ const variantB = await createLink({
 
 // 比较结果
 const results = await fetch(
-  'https://kutt.it/api/v2/stats/abtest',
+  'https://hapxs-surl.com/api/v2/stats/abtest',
   {
     method: 'POST',
     headers: {
@@ -559,7 +559,7 @@ const funnel = [
 ];
 
 const results = await fetch(
-  'https://kutt.it/api/v2/stats/funnel',
+  'https://hapxs-surl.com/api/v2/stats/funnel',
   {
     method: 'POST',
     headers: {
@@ -582,7 +582,7 @@ console.log(`总转化率: ${results.total_conversion_rate}%`);
 ```javascript
 setInterval(async () => {
   const stats = await fetch(
-    'https://kutt.it/api/v2/stats/links/LINK_ID/realtime',
+    'https://hapxs-surl.com/api/v2/stats/links/LINK_ID/realtime',
     { headers: { 'X-API-KEY': 'your-api-key' } }
   );
   
@@ -602,7 +602,7 @@ setInterval(async () => {
 ```javascript
 // 使用 Chart.js 或其他图表库
 const heatmapData = await fetch(
-  'https://kutt.it/api/v2/stats/links/LINK_ID/heatmap?period=week',
+  'https://hapxs-surl.com/api/v2/stats/links/LINK_ID/heatmap?period=week',
   { headers: { 'X-API-KEY': 'your-api-key' } }
 );
 
@@ -616,7 +616,7 @@ const heatmapData = await fetch(
 
 ```javascript
 const visits = await fetch(
-  'https://kutt.it/api/v2/stats/links/LINK_ID/visits?start_date=2025-01-01&limit=1000',
+  'https://hapxs-surl.com/api/v2/stats/links/LINK_ID/visits?start_date=2025-01-01&limit=1000',
   { headers: { 'X-API-KEY': 'your-api-key' } }
 );
 
@@ -679,7 +679,7 @@ npm run migrate
 ## 📚 相关文档
 
 - [基础功能文档](./FEATURES.md)
-- [API 文档](https://docs.kutt.it)
+- [API 文档](https://docs.hapxs-surl.it)
 - [安装指南](./INSTALLATION_GUIDE.md)
 
 ---
@@ -687,6 +687,6 @@ npm run migrate
 ## 🆘 获取帮助
 
 如有问题或建议：
-1. 查看 [GitHub Issues](https://github.com/thedevs-network/kutt/issues)
+1. 查看 [GitHub Issues](https://github.com/devhappys/hapxs-surl/issues)
 2. 提交新的 Issue
 3. 加入社区讨论

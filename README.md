@@ -1,16 +1,16 @@
-<p align="center"><a href="https://kutt.it" title="kutt.it"><img src="https://raw.githubusercontent.com/thedevs-network/kutt/9d1c873897c3f5b9a1bd0c74dc5d23f2ed01f2ec/static/images/logo-github.png" alt="Kutt.it"></a></p>
+<p align="center"><a href="https://hapxs-surl.com" title="hapxs-surl.it"><img src="https://raw.githubusercontent.com/thedevs-network/hapxs-surl/9d1c873897c3f5b9a1bd0c74dc5d23f2ed01f2ec/static/images/logo-github.png" alt="hapxs-surl.it"></a></p>
 
-# Kutt.it
+# hapxs-surl.it
 
-**Kutt** is a modern URL shortener with support for custom domains. Create and edit links, view statistics, manage users, and more.
+**hapxs-surl** is a modern URL shortener with support for custom domains. Create and edit links, view statistics, manage users, and more.
 
-[https://kutt.it](https://kutt.it)
+[https://hapxs-surl.com](https://hapxs-surl.com)
 
 
-[![docker-build-release](https://github.com/thedevs-network/kutt/actions/workflows/docker-build-release.yaml/badge.svg)](https://github.com/thedevs-network/kutt/actions/workflows/docker-build-release.yaml)
-[![Uptime Status](https://uptime.betterstack.com/status-badges/v2/monitor/1ogaa.svg)](https://status.kutt.it)
-[![Contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/thedevs-network/kutt/#contributing)
-[![GitHub license](https://img.shields.io/github/license/thedevs-network/kutt.svg)](https://github.com/thedevs-network/kutt/blob/develop/LICENSE)
+[![docker-build-release](https://github.com/devhappys/hapxs-surl/actions/workflows/docker-build-release.yaml/badge.svg)](https://github.com/devhappys/hapxs-surl/actions/workflows/docker-build-release.yaml)
+[![Uptime Status](https://uptime.betterstack.com/status-badges/v2/monitor/1ogaa.svg)](https://status.hapxs-surl.it)
+[![Contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/devhappys/hapxs-surl/#contributing)
+[![GitHub license](https://img.shields.io/github/license/thedevs-network/hapxs-surl.svg)](https://github.com/devhappys/hapxs-surl/blob/develop/LICENSE)
 
 ## Table of contents
 
@@ -43,9 +43,9 @@
 
 ## Donations and sponsors
 
-Support the development of Kutt by making a donation or becoming an sponsor.
+Support the development of hapxs-surl by making a donation or becoming an sponsor.
 
-[Donate or sponsor →](https://btcpay.kutt.it/apps/L9Gc7PrnLykeRHkhsH2jHivBeEh/crowdfund)
+[Donate or sponsor →](https://btcpay.hapxs-surl.it/apps/L9Gc7PrnLykeRHkhsH2jHivBeEh/crowdfund)
 
 ## Setup
 
@@ -53,7 +53,7 @@ The only prerequisite is [Node.js](https://nodejs.org/) (version 20 or above). T
 
 When you first start the app, you're prompted to create an admin account.
 
-1. Clone this repository or [download the latest zip](https://github.com/thedevs-network/kutt/releases)
+1. Clone this repository or [download the latest zip](https://github.com/devhappys/hapxs-surl/releases)
 2. Install dependencies: `npm install`
 3. Initialize database: `npm run migrate`
 5. Start the app for development `npm run dev` or production `npm start`
@@ -68,19 +68,19 @@ docker compose up
 
 Various docker-compose configurations are available. Use `docker compose -f <file_name> up` to start the one you want:
 
-- [`docker-compose.yml`](./docker-compose.yml): Default Kutt setup. Uses SQLite for the database.
-- [`docker-compose.sqlite-redis.yml`](./docker-compose.sqlite-redis.yml): Starts Kutt with SQLite and Redis.
+- [`docker-compose.yml`](./docker-compose.yml): Default hapxs-surl setup. Uses SQLite for the database.
+- [`docker-compose.sqlite-redis.yml`](./docker-compose.sqlite-redis.yml): Starts hapxs-surl with SQLite and Redis.
   - Required environment variable: `REDIS_ENABLED`
-- [`docker-compose.postgres.yml`](./docker-compose.postgres.yml): Starts Kutt with Postgres and Redis.
+- [`docker-compose.postgres.yml`](./docker-compose.postgres.yml): Starts hapxs-surl with Postgres and Redis.
   - Required environment variables: `REDIS_ENABLED`, `DB_PASSWORD`, `DB_NAME`, `DB_USER`
-- [`docker-compose.mariadb.yml`](./docker-compose.mariadb.yml): Starts Kutt with MariaDB and Redis.
+- [`docker-compose.mariadb.yml`](./docker-compose.mariadb.yml): Starts hapxs-surl with MariaDB and Redis.
   - Required environment variables: `REDIS_ENABLED`, `DB_PASSWORD`, `DB_NAME`, `DB_USER`, `DB_PORT`
 
-Official Kutt Docker image is available on [Docker Hub](https://hub.docker.com/r/kutt/kutt).
+Official hapxs-surl Docker image is available on [Docker Hub](https://hub.docker.com/r/hapxs-surl/hapxs-surl).
 
 ## API
 
-[View API documentation →](https://docs.kutt.it)
+[View API documentation →](https://docs.hapxs-surl.it)
 
 ## Configuration
 
@@ -94,7 +94,7 @@ You can use files for each of the variables by appending `_FILE` to the name of 
 | -------- | ----------- | ------- | ------- |
 | `JWT_SECRET` | This is used to sign authentication tokens. Use a **long** **random** string. | - | - |
 | `PORT` |  The port to start the app on | `3000` | `8888` |
-| `SITE_NAME` |  Name of the website | `Kutt` | `Your Site` |
+| `SITE_NAME` |  Name of the website | `hapxs-surl` | `Your Site` |
 | `DEFAULT_DOMAIN` |  The domain address that this app runs on | `localhost:3000` | `yoursite.com` |
 | `LINK_LENGTH` | The length of of shortened address | `6` | `5` |
 | `LINK_CUSTOM_ALPHABET` | Alphabet used to generate custom addresses. Default value omits o, O, 0, i, I, l, 1, and j to avoid confusion when reading the URL. | (abcd..789) | `abcABC^&*()@` |
@@ -105,7 +105,7 @@ You can use files for each of the variables by appending `_FILE` to the name of 
 | `DB_FILENAME` |  File path for the SQLite database. Only if you use SQLite. | `db/data` | `/var/lib/data` |
 | `DB_HOST` | Database connection host. Only if you use Postgres or MySQL. | `localhost` | `your-db-host.com` |
 | `DB_PORT` | Database port. Only if you use Postgres or MySQL. | `5432` (Postgres) | `3306` (MySQL) |
-| `DB_NAME` | Database name. Only if you use Postgres or MySQL. | `kutt` | `mydb` |
+| `DB_NAME` | Database name. Only if you use Postgres or MySQL. | `hapxs-surl` | `mydb` |
 | `DB_USER` | Database user. Only if you use Postgres or MySQL. | `postgres` | `myuser` |
 | `DB_PASSWORD` | Database password. Only if you use Postgres or MySQL. | - | `mypassword` |
 | `DB_SSL` | Whether use SSL for the database connection. Only if you use Postgres or MySQL. | `false` | `true` |
@@ -155,24 +155,24 @@ custom/
 │  ├─ ...
 ```
 
-- **css**: Put your CSS style files here. ([View example →](https://github.com/thedevs-network/kutt-customizations/tree/main/themes/crimson/css))
+- **css**: Put your CSS style files here. ([View example →](https://github.com/devhappys/hapxs-surl-customizations/tree/main/themes/crimson/css))
   - You can put as many style files as you want: `custom1.css`, `custom2.css`, etc.
-  - If you name your style file `styles.css`, it will replace Kutt's original `styles.css` file.
+  - If you name your style file `styles.css`, it will replace hapxs-surl's original `styles.css` file.
   - Each file will be accessible by `<your-site.com>/css/<file>.css`
-- **images**: Put your images here. ([View example →](https://github.com/thedevs-network/kutt-customizations/tree/main/themes/crimson/images))
-  - Name them just like the files inside the [`/static/images/`](./static/images) folder to replace Kutt's original images.
+- **images**: Put your images here. ([View example →](https://github.com/devhappys/hapxs-surl-customizations/tree/main/themes/crimson/images))
+  - Name them just like the files inside the [`/static/images/`](./static/images) folder to replace hapxs-surl's original images.
   - Each image will be accessible by `<your-site.com>/images/<image>.<image-format>`
-- **views**: Custom HTML templates to render. ([View example →](https://github.com/thedevs-network/kutt-customizations/tree/main/themes/crimson/views))
+- **views**: Custom HTML templates to render. ([View example →](https://github.com/devhappys/hapxs-surl-customizations/tree/main/themes/crimson/views))
   - It should follow the same file naming and folder structure as [`/server/views`](./server/views)
-  - Although we try to keep the original file names unchanged, be aware that new changes on Kutt might break your custom views.
+  - Although we try to keep the original file names unchanged, be aware that new changes on hapxs-surl might break your custom views.
  
 #### Example theme: Crimson
 
 This is an example and official theme. Crimson includes custom styles, images, and views.
 
-[Get Crimson theme →](https://github.com/thedevs-network/kutt-customizations/tree/main/themes/crimson)
+[Get Crimson theme →](https://github.com/devhappys/hapxs-surl-customizations/tree/main/themes/crimson)
 
-[View list of themes and customizations →](https://github.com/thedevs-network/kutt-customizations)
+[View list of themes and customizations →](https://github.com/devhappys/hapxs-surl-customizations)
 
 
 | Homepage | Admin page | Login/signup |
@@ -183,28 +183,28 @@ This is an example and official theme. Crimson includes custom styles, images, a
 
 If you're building the image locally, then the `/custom` folder should already be included in your app.
 
-If you're pulling the official image, make sure `/kutt/custom` volume is mounted or you have access to it. [View Docker compose example →](https://github.com/thedevs-network/kutt/blob/main/docker-compose.yml#L7)
+If you're pulling the official image, make sure `/hapxs-surl/custom` volume is mounted or you have access to it. [View Docker compose example →](https://github.com/devhappys/hapxs-surl/blob/main/docker-compose.yml#L7)
 
 Then, move your files to that volume. You can do it with this Docker command:
 
 ```sh
-docker cp <path-to-custom-folder> <kutt-container-name>:/kutt
+docker cp <path-to-custom-folder> <hapxs-surl-container-name>:/hapxs-surl
 ```
 
 For example:
 
 ```sh
-docker cp custom kutt-server-1:/kutt
+docker cp custom hapxs-surl-server-1:/hapxs-surl
 ```
 
-Make sure to restart the kutt server container after copying files or making changes.
+Make sure to restart the hapxs-surl server container after copying files or making changes.
 
 ## Browser extensions
 
-Download Kutt's extension for web browsers via below links.
+Download hapxs-surl's extension for web browsers via below links.
 
-- [Chrome](https://chrome.google.com/webstore/detail/kutt/pklakpjfiegjacoppcodencchehlfnpd)
-- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/kutt/)
+- [Chrome](https://chrome.google.com/webstore/detail/hapxs-surl/pklakpjfiegjacoppcodencchehlfnpd)
+- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/hapxs-surl/)
 
 ## Videos
 
@@ -214,28 +214,28 @@ Download Kutt's extension for web browsers via below links.
 
 ## Integrations
 
-- **ShareX** – You can use Kutt as your default URL shortener in [ShareX](https://getsharex.com/). If you host your custom instance of Kutt, refer to [ShareX wiki](https://github.com/thedevs-network/kutt/wiki/ShareX) on how to setup.
-- **Alfred workflow** – Download Kutt's official workflow for [Alfred](https://www.alfredapp.com/) app from [alfred-kutt](https://github.com/thedevs-network/alfred-kutt) repository.
-- **iOS shortcut** – [Kutt shortcut](https://www.icloud.com/shortcuts/a829856aea2c420e97c53437e68b752b) for your apple device which works from the iOS sharing context menu or on standalone mode. A courtesy of [@caneeeeee](https://github.com/caneeeeee).
+- **ShareX** – You can use hapxs-surl as your default URL shortener in [ShareX](https://getsharex.com/). If you host your custom instance of hapxs-surl, refer to [ShareX wiki](https://github.com/devhappys/hapxs-surl/wiki/ShareX) on how to setup.
+- **Alfred workflow** – Download hapxs-surl's official workflow for [Alfred](https://www.alfredapp.com/) app from [alfred-hapxs-surl](https://github.com/thedevs-network/alfred-hapxs-surl) repository.
+- **iOS shortcut** – [hapxs-surl shortcut](https://www.icloud.com/shortcuts/a829856aea2c420e97c53437e68b752b) for your apple device which works from the iOS sharing context menu or on standalone mode. A courtesy of [@caneeeeee](https://github.com/caneeeeee).
 
 **Third-party packages**
 
 
 | Language        | Link                                                                              | Description                                          |
 | --------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| C# (.NET)       | [KuttSharp](https://github.com/0xaryan/KuttSharp)                                 | .NET package for Kutt.it url shortener               |
-| C# (.NET)       | [Kutt.NET](https://github.com/AlphaNecron/Kutt.NET)                               | C# API Wrapper for Kutt                              |
-| Python          | [kutt-cli](https://github.com/RealAmirali/kutt-cli)                               | Command-line client for Kutt written in Python       |
-| Ruby            | [kutt.rb](https://github.com/RealAmirali/kutt.rb)                                 | Kutt library written in Ruby                         |
+| C# (.NET)       | [hapxs-surlSharp](https://github.com/0xaryan/hapxs-surlSharp)                                 | .NET package for hapxs-surl.it url shortener               |
+| C# (.NET)       | [hapxs-surl.NET](https://github.com/AlphaNecron/hapxs-surl.NET)                               | C# API Wrapper for hapxs-surl                              |
+| Python          | [hapxs-surl-cli](https://github.com/RealAmirali/hapxs-surl-cli)                               | Command-line client for hapxs-surl written in Python       |
+| Ruby            | [hapxs-surl.rb](https://github.com/RealAmirali/hapxs-surl.rb)                                 | hapxs-surl library written in Ruby                         |
 | Rust            | [urlshortener](https://github.com/vityafx/urlshortener-rs)                        | URL shortener library written in Rust                |
-| Rust            | [kutt-rs](https://github.com/robatipoor/kutt-rs)                                  | Command line tool written in Rust                    |
-| Node.js         | [node-kutt](https://github.com/ardalanamini/node-kutt)                            | Node.js client for Kutt.it url shortener             |
-| JavaScript      | [kutt-vscode](https://github.com/mehrad77/kutt-vscode)                            | Visual Studio Code extension for Kutt                |
-| Java            | [kutt-desktop](https://github.com/cipher812/kutt-desktop)                         | A Cross platform Java desktop application for Kutt   |
-| Go              | [kutt-go](https://github.com/raahii/kutt-go)                                      | Go client for Kutt.it url shortener                  |
+| Rust            | [hapxs-surl-rs](https://github.com/robatipoor/hapxs-surl-rs)                                  | Command line tool written in Rust                    |
+| Node.js         | [node-hapxs-surl](https://github.com/ardalanamini/node-hapxs-surl)                            | Node.js client for hapxs-surl.it url shortener             |
+| JavaScript      | [hapxs-surl-vscode](https://github.com/mehrad77/hapxs-surl-vscode)                            | Visual Studio Code extension for hapxs-surl                |
+| Java            | [hapxs-surl-desktop](https://github.com/cipher812/hapxs-surl-desktop)                         | A Cross platform Java desktop application for hapxs-surl   |
+| Go              | [hapxs-surl-go](https://github.com/raahii/hapxs-surl-go)                                      | Go client for hapxs-surl.it url shortener                  |
 | BASH            | [GitHub Gist](https://gist.github.com/hashworks/6d6e4eae8984a5018f7692a796d570b4) | Simple BASH function to access the API               |
 | BASH            | [url-shortener](https://git.tim-peters.org/Tim/url-shortener)                     | Simple BASH script with GUI                          |
-| Kubernetes/Helm | [ArtifactHub](https://artifacthub.io/packages/helm/christianhuth/kutt)            | A Helm Chart to install Kutt on a Kubernetes cluster |
+| Kubernetes/Helm | [ArtifactHub](https://artifacthub.io/packages/helm/christianhuth/hapxs-surl)            | A Helm Chart to install hapxs-surl on a Kubernetes cluster |
 
 ## Contributing
 

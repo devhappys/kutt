@@ -1,2 +1,43 @@
+# Git
 .git
+.gitignore
+
+# Dependencies
 node_modules
+client/node_modules
+
+# Build outputs
+client/dist
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage
+.nyc_output
+
+# Temp
+*.tmp
+temp
+tmp
+
+# Documentation (exclude from image)
+*.md
+!README.md
+
+# CI/CD
+.github
+.gitlab-ci.yml

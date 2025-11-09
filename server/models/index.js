@@ -7,4 +7,5 @@ module.exports = {
   ...require("./visit.model"),
   ...require("./visit_detail.model"),
   ...require("./tag.model"),
+  ...require("./security.model"),
 }

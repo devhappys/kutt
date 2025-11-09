@@ -1,28 +1,74 @@
-# specify node.js image
-FROM node:22-alpine
+# syntax=docker/dockerfile:1
 
-# use production node environment by default
-ENV NODE_ENV=production
+# ==================== Stage 1: Build Frontend ====================
+FROM node:24-alpine AS frontend-builder
 
-# install pnpm globally
+# install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# set working directory.
-WORKDIR /kutt
+WORKDIR /app/client
 
-# download dependencies while using Docker's caching
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
+# copy frontend package files
+COPY client/package.json client/pnpm-lock.yaml ./
+
+# install frontend dependencies
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# copy frontend source files
+COPY client/ ./
+
+# build frontend
+RUN pnpm build
+
+# ==================== Stage 2: Build Backend ====================
+FROM node:24-alpine AS backend-builder
+
+# install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# copy root package files
+COPY package.json pnpm-lock.yaml ./
+
+# install backend dependencies (production only)
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --prod --frozen-lockfile
 
-RUN mkdir -p /var/lib/kutt
+# ==================== Stage 3: Production Image ====================
+FROM node:24-alpine
 
-# copy the rest of source files into the image
-COPY . .
+# install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# expose the port that the app listens on
+# set working directory
+WORKDIR /hapxs-surl
+
+# create data directory
+RUN mkdir -p /var/lib/hapxs-surl
+
+# copy backend dependencies from builder
+COPY --from=backend-builder /app/node_modules ./node_modules
+COPY --from=backend-builder /app/package.json ./package.json
+
+# copy backend source files
+COPY server ./server
+COPY custom ./custom
+COPY docs ./docs
+COPY knexfile.js ./
+
+# copy built frontend from builder
+COPY --from=frontend-builder /app/client/dist ./client/dist
+
+# copy static assets
+COPY static ./static
+
+# expose ports
 EXPOSE 3000
 
-# intialize database and run the app
-CMD pnpm run migrate && pnpm start
+# set environment variables
+ENV NODE_ENV=production
+
+# initialize database and run the app
+CMD ["sh", "-c", "pnpm migrate && pnpm start"]
