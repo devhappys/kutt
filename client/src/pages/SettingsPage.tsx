@@ -1,17 +1,19 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { authApi } from '@/lib/api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authApi, domainsApi, usersApi } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
-import { User, Key, Copy, Eye, EyeOff, Save, Mail, Shield } from 'lucide-react'
+import { User, Key, Copy, Eye, EyeOff, Save, Mail, Shield, Globe, Lock, Trash2, AlertTriangle, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { copyToClipboard } from '@/lib/utils'
+import { useNavigate } from 'react-router-dom'
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'api' | 'security'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'api' | 'domains' | 'security'>('profile')
 
   const tabs = [
     { key: 'profile', label: 'Profile', icon: User, desc: 'Personal information' },
     { key: 'api', label: 'API Key', icon: Key, desc: 'API authentication' },
+    { key: 'domains', label: 'Domains', icon: Globe, desc: 'Custom domains' },
     { key: 'security', label: 'Security', icon: Shield, desc: 'Account security' },
   ]
 
@@ -48,6 +50,7 @@ export default function SettingsPage() {
       <div className="animate-fadeIn">
         {activeTab === 'profile' && <ProfileSection />}
         {activeTab === 'api' && <APIKeySection />}
+        {activeTab === 'domains' && <DomainsSection />}
         {activeTab === 'security' && <SecuritySection />}
       </div>
     </div>
@@ -149,8 +152,22 @@ function APIKeySection() {
     }
   }
 
+  const generateApiKey = useMutation({
+    mutationFn: authApi.generateApiKey,
+    onSuccess: (response) => {
+      const newApiKey = response.data.apikey
+      useAuthStore.getState().setAuth(useAuthStore.getState().user!, newApiKey)
+      toast.success('API Key regenerated successfully!')
+    },
+    onError: () => {
+      toast.error('Failed to regenerate API key')
+    },
+  })
+
   const handleRegenerate = () => {
-    toast.success('API Key regeneration coming soon!')
+    if (confirm('Are you sure you want to regenerate your API key? Your old key will stop working.')) {
+      generateApiKey.mutate()
+    }
   }
 
   return (
@@ -279,17 +296,14 @@ function SecuritySection() {
   })
 
   const changePassword = useMutation({
-    mutationFn: async (data: any) => {
-      // Placeholder for password change
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return data
-    },
+    mutationFn: (data: { currentpassword: string; newpassword: string }) => 
+      authApi.changePassword(data),
     onSuccess: () => {
       toast.success('Password changed successfully')
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' })
     },
-    onError: () => {
-      toast.error('Failed to change password')
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to change password')
     },
   })
 
@@ -299,7 +313,10 @@ function SecuritySection() {
       toast.error('Passwords do not match')
       return
     }
-    changePassword.mutate(formData)
+    changePassword.mutate({
+      currentpassword: formData.currentPassword,
+      newpassword: formData.newPassword
+    })
   }
 
   return (
@@ -400,6 +417,321 @@ function SecuritySection() {
             Coming Soon
           </button>
         </div>
+      </div>
+
+      {/* Delete Account */}
+      <DeleteAccountSection />
+    </div>
+  )
+}
+
+function DeleteAccountSection() {
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
+  const [showModal, setShowModal] = useState(false)
+  const [password, setPassword] = useState('')
+
+  const deleteAccount = useMutation({
+    mutationFn: (data: { password: string }) => usersApi.deleteAccount(data),
+    onSuccess: () => {
+      toast.success('Account deleted successfully')
+      logout()
+      navigate('/login')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete account')
+    },
+  })
+
+  const handleDelete = () => {
+    if (!password) {
+      toast.error('Please enter your password')
+      return
+    }
+    deleteAccount.mutate({ password })
+  }
+
+  return (
+    <>
+      <div className="card mt-6 border-2 border-red-200">
+        <div className="flex items-start gap-4">
+          <div className="rounded-xl p-3 bg-red-100">
+            <AlertTriangle className="h-6 w-6 text-red-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900">Danger Zone</h3>
+            <p className="text-sm text-gray-600 mt-1 mb-4">
+              Once you delete your account, there is no going back. All your links, stats, and settings will be permanently removed.
+            </p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn-danger flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Account
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-6 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Delete Account</h2>
+              <p className="text-gray-600">
+                This action cannot be undone. Please enter your password to confirm.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="label">Password *</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <p className="text-sm text-red-800 font-medium mb-2">
+                  ⚠️ This will permanently delete:
+                </p>
+                <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                  <li>All your shortened links</li>
+                  <li>All statistics and analytics data</li>
+                  <li>Custom domains and settings</li>
+                  <li>API keys and integrations</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteAccount.isPending}
+                  className="btn-danger flex-1"
+                >
+                  {deleteAccount.isPending ? 'Deleting...' : 'Delete Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+function DomainsSection() {
+  const queryClient = useQueryClient()
+  const { user } = useAuthStore()
+  const [showAddModal, setShowAddModal] = useState(false)
+
+  // Refresh user data to get latest domains
+  useQuery({
+    queryKey: ['user-domains'],
+    queryFn: () => authApi.getUser(),
+  })
+
+  const domains = user?.domains || []
+
+  const deleteDomain = useMutation({
+    mutationFn: domainsApi.remove,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-domains'] })
+      toast.success('Domain deleted successfully')
+    },
+    onError: () => {
+      toast.error('Failed to delete domain')
+    },
+  })
+
+  return (
+    <div className="max-w-4xl">
+      <div className="card">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary-600" />
+              Custom Domains
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Add your own domain to create branded short links
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Domain
+          </button>
+        </div>
+
+        {domains.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <Globe className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Custom Domains</h3>
+            <p className="text-gray-600 mb-6">
+              Add your own domain to create professional branded short links
+            </p>
+            <button onClick={() => setShowAddModal(true)} className="btn-primary">
+              <Plus className="h-4 w-4 mr-2 inline" />
+              Add Your First Domain
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {domains.map((domain: any) => (
+              <div
+                key={domain.id}
+                className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary-100 p-2">
+                    <Globe className="h-5 w-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{domain.address}</p>
+                    <p className="text-sm text-gray-500">
+                      {domain.links_count || 0} links
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteDomain.mutate(domain.id)}
+                  className="btn-danger p-2"
+                  title="Delete domain"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-start gap-3">
+            <Lock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-blue-900 mb-1">DNS Configuration Required</p>
+              <p className="text-sm text-blue-700">
+                After adding a domain, you'll need to configure DNS records to point to our servers.
+                Instructions will be provided after adding your domain.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showAddModal && (
+        <AddDomainModal onClose={() => setShowAddModal(false)} />
+      )}
+    </div>
+  )
+}
+
+function AddDomainModal({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [formData, setFormData] = useState({
+    address: '',
+    homepage: '',
+  })
+
+  const addDomain = useMutation({
+    mutationFn: domainsApi.add,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-domains'] })
+      toast.success('Domain added successfully!')
+      onClose()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to add domain')
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    addDomain.mutate(formData)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Custom Domain</h2>
+          <p className="text-gray-600">
+            Enter your domain name to use for short links
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="label">Domain Name *</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="input"
+              placeholder="short.yourdomain.com"
+              required
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Enter your domain without http:// or https://
+            </p>
+          </div>
+
+          <div>
+            <label className="label">Homepage URL (Optional)</label>
+            <input
+              type="url"
+              value={formData.homepage}
+              onChange={(e) => setFormData({ ...formData, homepage: e.target.value })}
+              className="input"
+              placeholder="https://yourdomain.com"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Where to redirect when someone visits your domain root
+            </p>
+          </div>
+
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <p className="text-sm font-medium text-yellow-900 mb-2">📝 Next Steps</p>
+            <ol className="text-sm text-yellow-700 space-y-1 list-decimal list-inside">
+              <li>Add your domain here</li>
+              <li>Configure DNS A record to point to our server</li>
+              <li>Wait for DNS propagation (up to 48 hours)</li>
+              <li>Start creating links with your custom domain</li>
+            </ol>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={addDomain.isPending}
+              className="btn-primary flex-1"
+            >
+              {addDomain.isPending ? 'Adding...' : 'Add Domain'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

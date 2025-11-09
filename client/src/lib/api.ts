@@ -218,6 +218,26 @@ export const securityApi = {
     api.delete(`/security/redirect-rules/${id}`),
 }
 
+// ==================== Domains API ====================
+export const domainsApi = {
+  add: (data: { address: string; homepage?: string }) =>
+    api.post('/domains', data),
+  
+  remove: (id: string) => api.delete(`/domains/${id}`),
+  
+  // Admin endpoints
+  getAdmin: (params?: { limit?: number; skip?: number }) =>
+    api.get('/domains/admin', { params }),
+  
+  addAdmin: (data: { address: string; user_id?: number }) =>
+    api.post('/domains/admin', data),
+  
+  removeAdmin: (id: string) => api.delete(`/domains/admin/${id}`),
+  
+  ban: (id: string, data: { host: string; banned: boolean }) =>
+    api.post(`/domains/admin/ban/${id}`, data),
+}
+
 // ==================== Auth API ====================
 export const authApi = {
   login: (data: { email: string; password: string }) =>
@@ -230,6 +250,41 @@ export const authApi = {
 
   updateUser: (data: Partial<{ email: string }>) =>
     api.patch('/users', data),
+  
+  changePassword: (data: { currentpassword: string; newpassword: string }) =>
+    api.post('/auth/change-password', data),
+  
+  changeEmail: (data: { email: string; password: string }) =>
+    api.post('/auth/change-email', data),
+  
+  generateApiKey: () => api.post('/auth/apikey'),
+  
+  resetPassword: (data: { email: string }) =>
+    api.post('/auth/reset-password', data),
+  
+  newPassword: (data: { password: string; reset_password_token: string }) =>
+    api.post('/auth/new-password', data),
+  
+  createAdmin: (data: { email: string; password: string }) =>
+    api.post('/auth/create-admin', data),
+}
+
+// ==================== Users API ====================
+export const usersApi = {
+  deleteAccount: (data: { password: string }) =>
+    api.post('/users/delete', data),
+  
+  // Admin endpoints
+  getAdmin: (params?: { limit?: number; skip?: number }) =>
+    api.get('/users/admin', { params }),
+  
+  createUser: (data: { email: string; password: string }) =>
+    api.post('/users/admin', data),
+  
+  deleteUser: (id: string) => api.delete(`/users/admin/${id}`),
+  
+  banUser: (id: string, data: { banned: boolean }) =>
+    api.post(`/users/admin/ban/${id}`, data),
 }
 
 export default api
