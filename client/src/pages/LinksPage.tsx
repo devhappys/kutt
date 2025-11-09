@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { linksApi, tagsApi, qrcodeApi } from '@/lib/api'
 import { 
-  Plus, Search, Copy, QrCode, BarChart3, Edit, Trash2, 
-  ExternalLink, Tag as TagIcon, X, Download
+  Plus, Search, Copy, QrCode, BarChart3, Trash2, 
+  ExternalLink, X, Download
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -120,7 +120,7 @@ export default function LinksPage() {
               key={link.id}
               link={link}
               onCopy={handleCopy}
-              onDelete={(id) => deleteLink.mutate(id)}
+              onDelete={(id: string) => deleteLink.mutate(id)}
               onShowQR={setShowQRModal}
             />
           ))}

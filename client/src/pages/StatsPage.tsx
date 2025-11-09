@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { statsApi, linksApi } from '@/lib/api'
 import { 
   TrendingUp, Users, Eye, Clock, Globe, Monitor, Download, 
-  ArrowLeft, Calendar, MapPin, Smartphone, MousePointer,
+  ArrowLeft, MapPin, Smartphone, MousePointer,
   ExternalLink, Activity
 } from 'lucide-react'
 import { formatNumber, formatRelativeTime, downloadBlob } from '@/lib/utils'
@@ -12,7 +12,7 @@ import toast from 'react-hot-toast'
 
 export default function StatsPage() {
   const { linkId } = useParams<{ linkId: string }>()
-  const [dateRange, setDateRange] = useState<'day' | 'week' | 'month'>('week')
+  const dateRange = 'week' as 'day' | 'week' | 'month'
 
   const { data: linkData } = useQuery({
     queryKey: ['link', linkId],
@@ -25,10 +25,11 @@ export default function StatsPage() {
     refetchInterval: 30000,
   })
 
-  const { data: heatmapData } = useQuery({
-    queryKey: ['stats', 'heatmap', linkId, dateRange],
-    queryFn: () => statsApi.getHeatmap(linkId!, dateRange),
-  })
+  // Heatmap data query (currently unused but available for future features)
+  // const { data: heatmapData } = useQuery({
+  //   queryKey: ['stats', 'heatmap', linkId, dateRange],
+  //   queryFn: () => statsApi.getHeatmap(linkId!, dateRange),
+  // })
 
   const { data: utmData } = useQuery({
     queryKey: ['stats', 'utm', linkId],

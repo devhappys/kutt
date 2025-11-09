@@ -350,7 +350,7 @@ function IPRuleModal({ linkId, onClose }: { linkId: string; onClose: () => void 
 }
 
 // ==================== Other Sections ====================
-function GeoRestrictionsSection({ linkId }: { linkId: string }) {
+function GeoRestrictionsSection({ linkId: _linkId }: { linkId: string }) {
   return (
     <div className="card text-center py-20">
       <div className="inline-flex rounded-full bg-green-100 p-6 mb-6">
@@ -369,7 +369,7 @@ function GeoRestrictionsSection({ linkId }: { linkId: string }) {
   )
 }
 
-function RateLimitsSection({ linkId }: { linkId: string }) {
+function RateLimitsSection({ linkId: _linkId }: { linkId: string }) {
   return (
     <div className="card text-center py-20">
       <div className="inline-flex rounded-full bg-yellow-100 p-6 mb-6">
@@ -388,7 +388,7 @@ function RateLimitsSection({ linkId }: { linkId: string }) {
   )
 }
 
-function SmartRedirectsSection({ linkId }: { linkId: string }) {
+function SmartRedirectsSection({ linkId: _linkId }: { linkId: string }) {
   return (
     <div className="card text-center py-20">
       <div className="inline-flex rounded-full bg-purple-100 p-6 mb-6">

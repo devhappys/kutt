@@ -6,7 +6,6 @@ import { Link2, QrCode, BarChart3, Shield, Tag, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function HomePage() {
-  const navigate = useNavigate()
   const [url, setUrl] = useState('')
   const [customUrl, setCustomUrl] = useState('')
   const [shortLink, setShortLink] = useState('')
