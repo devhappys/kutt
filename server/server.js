@@ -14,6 +14,7 @@ const locals = require("./handlers/locals.handler");
 const links = require("./handlers/links.handler");
 const routes = require("./routes");
 const utils = require("./utils");
+const memoryMonitor = require("./utils/memoryMonitor");
 
 
 // run the cron jobs
@@ -22,6 +23,9 @@ const utils = require("./utils");
 if (env.NODE_APP_INSTANCE === 0) {
   require("./cron");
 }
+
+// Start memory monitoring
+memoryMonitor.startMonitoring();
 
 // intialize passport authentication library
 require("./passport");

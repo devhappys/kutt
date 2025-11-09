@@ -43,12 +43,6 @@ export default function StatsPage() {
     enabled: !!linkId,
   })
 
-  const { data: visitsData } = useQuery({
-    queryKey: ['stats', 'visits', linkId],
-    queryFn: () => statsApi.getVisitDetails(linkId!, { limit: 10 }),
-    enabled: !!linkId,
-  })
-
   const link = linkData?.data?.data?.[0]
   const realtime = realtimeData?.data
 
@@ -129,17 +123,23 @@ export default function StatsPage() {
 
       {/* Real-time Stats Cards */}
       <div className="mb-8">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
-          <Activity className="h-5 w-5 text-primary-600" />
-          Real-time Activity
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+            <Activity className="h-5 w-5 text-primary-600" />
+            Real-time Activity
+          </h2>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span>Live • Updates every 30s</span>
+          </div>
+        </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Active Now"
             value={realtime?.active_visitors || 0}
             icon={Users}
             color="green"
-            trend="+12%"
+            subtitle="Last 5 minutes"
           />
           <StatCard
             label="Last 15 Minutes"
@@ -163,12 +163,13 @@ export default function StatsPage() {
       </div>
 
       {/* Recent Visitors */}
-      {visitsData?.data?.data && visitsData.data.data.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
-            <MousePointer className="h-5 w-5 text-primary-600" />
-            Recent Visitors
-          </h2>
+      <div className="mb-8">
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+          <MousePointer className="h-5 w-5 text-primary-600" />
+          Recent Visitors
+          <span className="ml-2 text-sm font-normal text-gray-500">(Last hour)</span>
+        </h2>
+        {realtime?.recent_visits && realtime.recent_visits.length > 0 ? (
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="table">
@@ -177,25 +178,37 @@ export default function StatsPage() {
                     <th>Location</th>
                     <th>Device</th>
                     <th>Browser</th>
+                    <th>OS</th>
+                    <th>Referrer</th>
                     <th>Campaign</th>
                     <th>Time</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visitsData.data.data.map((visit: any, idx: number) => (
+                  {realtime.recent_visits.map((visit: any, idx: number) => (
                     <tr key={idx} className="hover:bg-gray-50">
                       <td>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />
-                          <span className="uppercase">{visit.country}</span>
+                          <span className="uppercase">{visit.country || '—'}</span>
                           {visit.city && <span className="text-gray-500">• {visit.city}</span>}
                         </div>
                       </td>
                       <td>
-                        <span className="capitalize">{visit.device_type}</span>
+                        <span className="capitalize">{visit.device_type || 'Desktop'}</span>
                       </td>
                       <td>
-                        <span className="capitalize">{visit.browser}</span>
+                        <span className="capitalize">{visit.browser || 'Unknown'}</span>
+                      </td>
+                      <td>
+                        <span className="capitalize">{visit.os || 'Unknown'}</span>
+                      </td>
+                      <td>
+                        {visit.referrer_domain ? (
+                          <span className="text-sm text-gray-700">{visit.referrer_domain}</span>
+                        ) : (
+                          <span className="text-gray-400">Direct</span>
+                        )}
                       </td>
                       <td>
                         {visit.utm_campaign ? (
@@ -206,7 +219,7 @@ export default function StatsPage() {
                           <span className="text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="text-gray-600">
+                      <td className="text-gray-600 whitespace-nowrap">
                         {formatRelativeTime(visit.created_at)}
                       </td>
                     </tr>
@@ -215,8 +228,20 @@ export default function StatsPage() {
               </table>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="card text-center py-12">
+            <div className="flex justify-center mb-4">
+              <div className="rounded-full bg-gray-100 p-4">
+                <MousePointer className="h-8 w-8 text-gray-400" />
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No recent visitors</h3>
+            <p className="text-gray-600">
+              Visitors will appear here once someone clicks on this link
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* UTM Campaigns */}
       {utmData?.data && utmData.data.campaigns?.length > 0 && (
@@ -331,9 +356,10 @@ interface StatCardProps {
   icon: React.ElementType
   color: 'green' | 'blue' | 'purple' | 'orange'
   trend?: string
+  subtitle?: string
 }
 
-function StatCard({ label, value, icon: Icon, color, trend }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, color, trend, subtitle }: StatCardProps) {
   const colorClasses = {
     green: 'bg-green-100 text-green-600',
     blue: 'bg-blue-100 text-blue-600',
@@ -353,6 +379,9 @@ function StatCard({ label, value, icon: Icon, color, trend }: StatCardProps) {
       </div>
       <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
       <p className="text-3xl font-bold text-gray-900">{formatNumber(value)}</p>
+      {subtitle && (
+        <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+      )}
     </div>
   )
 }

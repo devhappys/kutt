@@ -572,6 +572,10 @@ async function redirect(req, res, next) {
       ip: req.ip,
       country: req.get("cf-ipcountry"),
       referrer: req.get("Referrer"),
+      headers: {
+        "user-agent": req.headers["user-agent"],
+        "accept-language": req.headers["accept-language"],
+      },
       link
     });
   }
@@ -604,6 +608,10 @@ async function redirectProtected(req, res) {
       ip: req.ip,
       country: req.get("cf-ipcountry"),
       referrer: req.get("Referrer"),
+      headers: {
+        "user-agent": req.headers["user-agent"],
+        "accept-language": req.headers["accept-language"],
+      },
       link
     });
   }

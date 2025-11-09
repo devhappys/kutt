@@ -1,7 +1,36 @@
 const { Router } = require("express");
 
+const health = require("../handlers/health.handler");
+const auth = require("../handlers/auth.handler");
+const asyncHandler = require("../utils/asyncHandler");
+
 const router = Router();
 
-router.get("/", (_, res) => res.send("OK"));
+// Public health check endpoint
+router.get("/", asyncHandler(health.healthCheck));
+
+// Detailed memory stats (admin only)
+router.get(
+  "/memory",
+  asyncHandler(auth.jwt),
+  asyncHandler(auth.admin),
+  asyncHandler(health.memoryStats)
+);
+
+// Manual garbage collection trigger (admin only)
+router.post(
+  "/gc",
+  asyncHandler(auth.jwt),
+  asyncHandler(auth.admin),
+  asyncHandler(health.triggerGC)
+);
+
+// Clear caches manually (admin only)
+router.post(
+  "/clear-cache",
+  asyncHandler(auth.jwt),
+  asyncHandler(auth.admin),
+  asyncHandler(health.clearCaches)
+);
 
 module.exports = router;

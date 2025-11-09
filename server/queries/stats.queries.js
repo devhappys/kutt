@@ -12,7 +12,7 @@ const utils = require("../utils");
 
 // Add detailed visit record
 async function addDetailedVisit(data) {
-  const [id] = await knex("visit_details").insert({
+  await knex("visit_details").insert({
     link_id: data.link_id,
     user_id: data.user_id,
     ip_address: data.ip_address,
@@ -38,8 +38,6 @@ async function addDetailedVisit(data) {
     is_bot: data.is_bot || false,
     is_unique: data.is_unique || false,
   });
-  
-  return knex("visit_details").where({ id }).first();
 }
 
 // Get visit details with pagination and filters
