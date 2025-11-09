@@ -87,10 +87,6 @@ jobs:
         run: |
           pnpm install ssh2 dotenv axios
 
-      - name: Set script permissions
-        run: |
-          chmod +x .github/workflows/deploy_image.js
-
       - name: Run deployment script
         if: github.event_name != 'pull_request'
         env:
@@ -102,4 +98,4 @@ jobs:
           IMAGE_URL: ghcr.io/${{ steps.meta.outputs.lower_repo }}:${{ steps.meta.outputs.short_sha }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
-          node .github/workflows/deploy_image.js
+          pnpm exec node .github/workflows/deploy_image.js
