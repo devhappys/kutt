@@ -28,7 +28,9 @@ pnpm dev
 
 **启动时会看到：**
 ```
-[Visit Queue] Cleaning up old jobs...
+[Redis] Connected successfully
+[Redis] Ready to accept commands
+[Visit Queue] Queue ready, cleaning up old jobs...
 [Visit Queue] Found 10 stalled jobs, cleaning...
 [Visit Queue] Cleanup complete
 ```

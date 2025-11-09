@@ -27,10 +27,12 @@ if (env.REDIS_ENABLED) {
     }
   });
   
-  // Clean up old jobs immediately on startup
-  (async () => {
+  // Wait for queue to be ready before cleaning
+  visit.on("ready", async () => {
     try {
-      console.log("[Visit Queue] Cleaning up old jobs...");
+      console.log("[Visit Queue] Queue ready, cleaning up old jobs...");
+      
+      // Clean completed and failed jobs
       await visit.clean(0, "completed");
       await visit.clean(0, "failed");
       
@@ -41,20 +43,21 @@ if (env.REDIS_ENABLED) {
         for (const job of stalled) {
           await job.moveToFailed({ message: 'Stalled on startup' }, true);
         }
+        // Clean failed again after moving stalled jobs
+        await visit.clean(0, "failed");
       }
       
-      await visit.clean(0, "failed"); // Clean again after moving stalled to failed
       console.log("[Visit Queue] Cleanup complete");
     } catch (error) {
-      console.error("[Visit Queue] Cleanup error:", error);
+      console.error("[Visit Queue] Cleanup error:", error.message);
     }
-  })();
+  });
   
-  // Regular cleanup
+  // Regular cleanup every minute
   setInterval(() => {
-    visit.clean(5000, "completed").catch(err => console.error("Failed to clean completed:", err));
-    visit.clean(10000, "failed").catch(err => console.error("Failed to clean failed:", err));
-  }, 60000); // Every minute
+    visit.clean(5000, "completed").catch(err => console.error("[Visit Queue] Failed to clean completed:", err.message));
+    visit.clean(10000, "failed").catch(err => console.error("[Visit Queue] Failed to clean failed:", err.message));
+  }, 60000);
   
   // Process visits with concurrency
   visit.process(12, path.resolve(__dirname, "visit.js"));
