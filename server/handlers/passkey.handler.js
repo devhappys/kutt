@@ -70,17 +70,27 @@ async function registerInit(req, res) {
  */
 async function registerVerify(req, res) {
   const user = req.user;
-  const { credential, name } = req.body;
-
-  if (!credential || !name) {
-    throw new CustomError('Credential and name are required.', 400);
-  }
 
   try {
+    const { credential, name } = req.body;
+
+    if (!credential || !name) {
+      throw new CustomError('Credential and name are required.', 400);
+    }
+
+    // Get the stored challenge
     const expectedChallenge = challenges.get(user.id);
     if (!expectedChallenge) {
-      throw new CustomError('Challenge not found or expired.', 400);
+      console.error('Challenge not found for user:', user.id, 'Available challenges:', Array.from(challenges.keys()));
+      throw new CustomError('Challenge not found or expired. Please try again.', 400);
     }
+
+    console.log('Verifying passkey registration with config:', {
+      rpID,
+      origin,
+      expectedChallenge: expectedChallenge.substring(0, 20) + '...',
+      credentialId: credential.id,
+    });
 
     // Verify the registration response
     const verification = await verifyRegistrationResponse({
@@ -89,6 +99,11 @@ async function registerVerify(req, res) {
       expectedOrigin: [origin],
       expectedRPID: rpID,
       requireUserVerification: false,
+    });
+
+    console.log('Verification result:', {
+      verified: verification.verified,
+      hasRegistrationInfo: !!verification.registrationInfo,
     });
 
     if (!verification.verified || !verification.registrationInfo) {
