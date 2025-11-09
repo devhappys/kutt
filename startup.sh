@@ -66,15 +66,5 @@ if ! check_package_json; then
     exit 1
 fi
 
-echo "Running database migrations..."
-if ! node node_modules/.bin/knex migrate:latest; then
-    echo "ERROR: Database migration failed"
-    display_npm_error_logs
-    exit 1
-fi
-
-echo "Migrations completed successfully"
-echo ""
-echo "Starting server..."
-exec pnpm migrate
+echo "Starting server (migrations will run automatically)..."
 exec pnpm start
