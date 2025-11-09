@@ -23,6 +23,13 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // 开发环境使用 true，生产环境建议使用 'hidden'
+    sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,
+    // 优化分块
+    rollupOptions: {
+      output: {
+        sourcemapExcludeSources: true, // 不在 source map 中包含源代码
+      }
+    }
   },
 })

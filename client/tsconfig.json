@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "sourceMap": true, // 启用 TypeScript source maps
 
     /* Linting */
     "strict": true,
