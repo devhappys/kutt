@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { linksApi, tagsApi, qrcodeApi } from '@/lib/api'
 import { 
   Plus, Search, Copy, QrCode, BarChart3, Trash2, 
-  ExternalLink, X, Download
+  ExternalLink, X, Download, Edit, Lock, Calendar, RefreshCw
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -14,6 +14,7 @@ export default function LinksPage() {
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showQRModal, setShowQRModal] = useState<string | null>(null)
+  const [editingLink, setEditingLink] = useState<any>(null)
   const [selectedTags, setSelectedTags] = useState<number[]>([])
 
   const { data: linksData, isLoading } = useQuery({
@@ -120,6 +121,7 @@ export default function LinksPage() {
               key={link.id}
               link={link}
               onCopy={handleCopy}
+              onEdit={setEditingLink}
               onDelete={(id: string) => deleteLink.mutate(id)}
               onShowQR={setShowQRModal}
             />
@@ -139,6 +141,19 @@ export default function LinksPage() {
         />
       )}
 
+      {/* Edit Link Modal */}
+      {editingLink && (
+        <EditLinkModal
+          link={editingLink}
+          tags={tags}
+          onClose={() => setEditingLink(null)}
+          onSuccess={() => {
+            setEditingLink(null)
+            queryClient.invalidateQueries({ queryKey: ['links'] })
+          }}
+        />
+      )}
+
       {/* QR Code Modal */}
       {showQRModal && (
         <QRCodeModal linkId={showQRModal} onClose={() => setShowQRModal(null)} />
@@ -147,13 +162,25 @@ export default function LinksPage() {
   )
 }
 
-function LinkCard({ link, onCopy, onDelete, onShowQR }: any) {
+function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }: any) {
   return (
-    <div className="card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn">
-      <div className="flex items-start justify-between">
+    <div className="card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-lg truncate">/{link.address}</h3>
+          <div className="flex items-center flex-wrap gap-2 mb-2">
+            <h3 className="font-semibold text-lg break-all">/{link.address}</h3>
+            {link.password && (
+              <span className="badge bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                Protected
+              </span>
+            )}
+            {link.expire_in && (
+              <span className="badge bg-purple-100 text-purple-800 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Expires
+              </span>
+            )}
             {link.banned && (
               <span className="badge bg-red-100 text-red-800">Banned</span>
             )}
@@ -162,13 +189,13 @@ function LinkCard({ link, onCopy, onDelete, onShowQR }: any) {
             href={link.target}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-gray-600 hover:text-primary-600 flex items-center gap-1 truncate"
+            className="text-sm text-gray-600 hover:text-primary-600 flex items-center gap-1 max-w-full"
           >
-            {link.target}
+            <span className="truncate flex-1 min-w-0">{link.target}</span>
             <ExternalLink className="h-3 w-3 flex-shrink-0" />
           </a>
           {link.description && (
-            <p className="text-sm text-gray-500 mt-2">{link.description}</p>
+            <p className="text-sm text-gray-500 mt-2 break-words">{link.description}</p>
           )}
           {link.tags && link.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -185,13 +212,20 @@ function LinkCard({ link, onCopy, onDelete, onShowQR }: any) {
           )}
         </div>
         
-        <div className="flex items-center gap-2 ml-4">
+        <div className="flex items-center flex-wrap gap-2 sm:ml-4 flex-shrink-0">
           <button
             onClick={() => onCopy(link.address, link.domain)}
             className="btn-secondary p-2 hover:scale-110 transition-transform duration-200"
             title="Copy link"
           >
             <Copy className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => onEdit(link)}
+            className="btn-secondary p-2"
+            title="Edit link"
+          >
+            <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={() => onShowQR(link.uuid)}
@@ -226,10 +260,14 @@ function LinkCard({ link, onCopy, onDelete, onShowQR }: any) {
 }
 
 function CreateLinkModal({ tags, onClose, onSuccess }: any) {
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [formData, setFormData] = useState({
     target: '',
     customurl: '',
     description: '',
+    password: '',
+    expire_in: '',
+    reuse: false,
     tag_ids: [] as number[],
   })
 
@@ -294,6 +332,54 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
             />
           </div>
 
+          {/* Advanced Options Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+          >
+            {showAdvanced ? '▼' : '▶'} Advanced Options
+          </button>
+
+          {showAdvanced && (
+            <>
+              <div>
+                <label className="label">Password Protection (optional)</label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="input"
+                  placeholder="Add password to protect link"
+                />
+              </div>
+
+              <div>
+                <label className="label">Expiration Date (optional)</label>
+                <input
+                  type="datetime-local"
+                  value={formData.expire_in}
+                  onChange={(e) => setFormData({ ...formData, expire_in: e.target.value })}
+                  className="input"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="reuse"
+                  checked={formData.reuse}
+                  onChange={(e) => setFormData({ ...formData, reuse: e.target.checked })}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label htmlFor="reuse" className="text-sm text-gray-700 flex items-center gap-1">
+                  <RefreshCw className="h-4 w-4" />
+                  Reuse existing link if target already exists
+                </label>
+              </div>
+            </>
+          )}
+
           <div>
             <label className="label">Tags (optional)</label>
             <div className="flex flex-wrap gap-2">
@@ -337,6 +423,129 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
               className="btn-primary flex-1"
             >
               {createLink.isPending ? 'Creating...' : 'Create Link'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
+  const [formData, setFormData] = useState({
+    address: link.address || '',
+    target: link.target || '',
+    description: link.description || '',
+    expire_in: link.expire_in || '',
+  })
+
+  const updateLink = useMutation({
+    mutationFn: (data: any) => linksApi.update(link.uuid, data),
+    onSuccess: () => {
+      toast.success('Link updated!')
+      onSuccess()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update link')
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const updateData: any = {}
+    
+    if (formData.address !== link.address) updateData.address = formData.address
+    if (formData.target !== link.target) updateData.target = formData.target
+    if (formData.description !== link.description) updateData.description = formData.description
+    if (formData.expire_in !== link.expire_in) updateData.expire_in = formData.expire_in
+    
+    if (Object.keys(updateData).length === 0) {
+      toast.error('No changes to update')
+      return
+    }
+    
+    updateLink.mutate(updateData)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Edit Link</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label">Short URL</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="input"
+              placeholder="custom-url"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Change the short URL path
+            </p>
+          </div>
+
+          <div>
+            <label className="label">Destination URL *</label>
+            <input
+              type="url"
+              value={formData.target}
+              onChange={(e) => setFormData({ ...formData, target: e.target.value })}
+              className="input"
+              placeholder="https://example.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="label">Description (optional)</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="input resize-none"
+              rows={3}
+              placeholder="Add a description..."
+            />
+          </div>
+
+          <div>
+            <label className="label">Expiration Date (optional)</label>
+            <input
+              type="datetime-local"
+              value={formData.expire_in}
+              onChange={(e) => setFormData({ ...formData, expire_in: e.target.value })}
+              className="input"
+            />
+          </div>
+
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Note:</strong> Password protection cannot be modified after creation.
+              {link.password && " This link is password protected."}
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateLink.isPending}
+              className="btn-primary flex-1"
+            >
+              {updateLink.isPending ? 'Updating...' : 'Update Link'}
             </button>
           </div>
         </form>
