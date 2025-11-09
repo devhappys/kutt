@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, domainsApi, linksApi } from '@/lib/api'
 import { 
   Users, Globe, Link as LinkIcon, Shield, Trash2, Ban, Plus, Search,
-  X, Mail, Lock, CheckCircle, AlertTriangle, BarChart3, Eye
+  X, BarChart3, Eye
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 

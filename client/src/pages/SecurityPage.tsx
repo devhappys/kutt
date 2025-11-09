@@ -5,7 +5,7 @@ import { securityApi } from '@/lib/api'
 import { 
   Shield, Plus, Trash2, X, Globe, Zap, ArrowRight, 
   ArrowLeft, AlertTriangle, CheckCircle,
-  Smartphone, Clock, Target
+  Smartphone, Clock, Target, Edit
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -124,6 +124,7 @@ export default function SecurityPage() {
 function IPRulesSection({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
+  const [editingRule, setEditingRule] = useState<any>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ip-rules', linkId],
@@ -231,6 +232,14 @@ function IPRulesSection({ linkId }: { linkId: string }) {
 
       {showModal && (
         <IPRuleModal linkId={linkId} onClose={() => setShowModal(false)} />
+      )}
+
+      {editingRule && (
+        <EditIPRuleModal
+          linkId={linkId}
+          rule={editingRule}
+          onClose={() => setEditingRule(null)}
+        />
       )}
     </div>
   )
@@ -341,6 +350,143 @@ function IPRuleModal({ linkId, onClose }: { linkId: string; onClose: () => void 
               className="btn-primary flex-1"
             >
               {addRule.isPending ? 'Adding...' : 'Add Rule'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function EditIPRuleModal({ linkId, rule, onClose }: { linkId: string; rule: any; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [formData, setFormData] = useState({
+    ip_address: rule.ip_address || rule.ip_range || '',
+    rule_type: rule.rule_type as 'blacklist' | 'whitelist',
+    reason: rule.reason || '',
+    is_active: rule.is_active !== false,
+  })
+
+  const updateRule = useMutation({
+    mutationFn: (data: any) => securityApi.updateIPRule(rule.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ip-rules'] })
+      toast.success('IP rule updated successfully')
+      onClose()
+    },
+    onError: () => {
+      toast.error('Failed to update IP rule')
+    },
+  })
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Edit IP Rule</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form 
+          onSubmit={(e) => { 
+            e.preventDefault() 
+            const updateData: any = {}
+            if (formData.ip_address !== (rule.ip_address || rule.ip_range)) {
+              updateData.ip_address = formData.ip_address
+            }
+            if (formData.rule_type !== rule.rule_type) {
+              updateData.rule_type = formData.rule_type
+            }
+            if (formData.reason !== rule.reason) {
+              updateData.reason = formData.reason
+            }
+            if (formData.is_active !== (rule.is_active !== false)) {
+              updateData.is_active = formData.is_active
+            }
+            updateRule.mutate(updateData)
+          }} 
+          className="space-y-5"
+        >
+          <div>
+            <label className="label">IP Address *</label>
+            <input
+              type="text"
+              value={formData.ip_address}
+              onChange={(e) => setFormData({ ...formData, ip_address: e.target.value })}
+              className="input"
+              placeholder="192.168.1.100 or 192.168.1.0/24"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="label">Rule Type *</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, rule_type: 'blacklist' })}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  formData.rule_type === 'blacklist'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-red-600" />
+                <p className="font-semibold">Blacklist</p>
+                <p className="text-xs text-gray-600 mt-1">Block this IP</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, rule_type: 'whitelist' })}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  formData.rule_type === 'whitelist'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                <p className="font-semibold">Whitelist</p>
+                <p className="text-xs text-gray-600 mt-1">Allow only this IP</p>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Reason (Optional)</label>
+            <textarea
+              value={formData.reason}
+              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+              className="input resize-none"
+              rows={3}
+              placeholder="Why are you updating this rule?"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="h-4 w-4 text-primary-600 rounded"
+            />
+            <label htmlFor="is_active" className="text-sm text-gray-700">
+              Rule is active
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={updateRule.isPending} 
+              className="btn-primary flex-1"
+            >
+              {updateRule.isPending ? 'Updating...' : 'Update Rule'}
             </button>
           </div>
         </form>
