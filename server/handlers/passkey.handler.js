@@ -110,8 +110,23 @@ async function registerVerify(req, res) {
       throw new CustomError('Passkey verification failed.', 400);
     }
 
+    // Debug: log the structure of registrationInfo
+    console.log('registrationInfo structure:', JSON.stringify(verification.registrationInfo, null, 2));
+
     const { credential: credentialInfo } = verification.registrationInfo;
-    const { credentialPublicKey, credentialID, counter } = credentialInfo;
+    
+    // Debug: log credentialInfo
+    console.log('credentialInfo:', credentialInfo);
+    
+    // SimpleWebAuthn v13 structure
+    const credentialID = credentialInfo?.id || credentialInfo?.credentialID;
+    const credentialPublicKey = credentialInfo?.publicKey || credentialInfo?.credentialPublicKey;
+    const counter = credentialInfo?.counter ?? 0;
+    
+    if (!credentialID || !credentialPublicKey) {
+      console.error('Missing credential data:', { credentialID, credentialPublicKey });
+      throw new CustomError('Invalid credential data received.', 400);
+    }
 
     // Store the passkey in database
     const passkey = await query.passkey.add({
