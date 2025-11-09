@@ -35,20 +35,21 @@ async function registerInit(req, res) {
     const options = await generateRegistrationOptions({
       rpName,
       rpID,
-      userID: user.id.toString(),
+      userID: Uint8Array.from(user.id.toString(), c => c.charCodeAt(0)),
       userName: user.email,
+      userDisplayName: user.email,
       // Don't prompt users for additional information about the authenticator
       attestationType: 'none',
       // Prevent re-registration of existing passkeys
       excludeCredentials: userPasskeys.map(passkey => ({
         id: Buffer.from(passkey.credential_id, 'base64url'),
         type: 'public-key',
-        transports: passkey.transports ? passkey.transports.split(',') : [],
+        transports: passkey.transports ? passkey.transports.split(',') : undefined,
       })),
       authenticatorSelection: {
         // Try to use platform authenticators (like Windows Hello, Face ID, Touch ID)
         authenticatorAttachment: 'platform',
-        requireResidentKey: false,
+        residentKey: 'preferred',
         userVerification: 'preferred',
       },
     });
@@ -85,15 +86,17 @@ async function registerVerify(req, res) {
     const verification = await verifyRegistrationResponse({
       response: credential,
       expectedChallenge,
-      expectedOrigin: origin,
+      expectedOrigin: [origin],
       expectedRPID: rpID,
+      requireUserVerification: false,
     });
 
     if (!verification.verified || !verification.registrationInfo) {
       throw new CustomError('Passkey verification failed.', 400);
     }
 
-    const { credentialPublicKey, credentialID, counter } = verification.registrationInfo;
+    const { credential: credentialInfo } = verification.registrationInfo;
+    const { credentialPublicKey, credentialID, counter } = credentialInfo;
 
     // Store the passkey in database
     const passkey = await query.passkey.add({
@@ -163,7 +166,7 @@ async function authenticateInit(req, res) {
       allowCredentials: userPasskeys.map(passkey => ({
         id: Buffer.from(passkey.credential_id, 'base64url'),
         type: 'public-key',
-        transports: passkey.transports ? passkey.transports.split(',') : [],
+        transports: passkey.transports ? passkey.transports.split(',') : undefined,
       })),
       userVerification: 'preferred',
     });
@@ -218,13 +221,15 @@ async function authenticateVerify(req, res) {
     const verification = await verifyAuthenticationResponse({
       response: credential,
       expectedChallenge: challenge,
-      expectedOrigin: origin,
+      expectedOrigin: [origin],
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: Buffer.from(passkey.credential_id, 'base64url'),
-        credentialPublicKey: Buffer.from(passkey.credential_public_key, 'base64url'),
+      credential: {
+        id: Buffer.from(passkey.credential_id, 'base64url'),
+        publicKey: Buffer.from(passkey.credential_public_key, 'base64url'),
         counter: passkey.counter,
+        transports: passkey.transports ? passkey.transports.split(',') : undefined,
       },
+      requireUserVerification: false,
     });
 
     if (!verification.verified) {
@@ -232,7 +237,8 @@ async function authenticateVerify(req, res) {
     }
 
     // Update passkey counter and last used
-    await query.passkey.updateLastUsed(passkey.id, verification.authenticationInfo.newCounter);
+    const newCounter = verification.authenticationInfo?.counter ?? passkey.counter + 1;
+    await query.passkey.updateLastUsed(passkey.id, newCounter);
 
     // Generate JWT token
     const token = utils.signToken(user);

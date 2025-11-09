@@ -327,8 +327,16 @@ function AddPasskeyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       
       if (error.name === 'NotAllowedError') {
         toast.error('Passkey registration was cancelled')
+      } else if (error.name === 'InvalidStateError') {
+        toast.error('This passkey is already registered')
+      } else if (error.name === 'NotSupportedError') {
+        toast.error('Passkeys are not supported on this device')
+      } else if (error.name === 'AbortError') {
+        toast.error('Passkey registration timed out')
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message)
+      } else if (error.message) {
+        toast.error(`Registration failed: ${error.message}`)
       } else {
         toast.error('Failed to register passkey')
       }

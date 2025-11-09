@@ -76,8 +76,10 @@ cd ..
 ```
 
 新增的依赖包括：
-- **后端**：`@simplewebauthn/server@^10.0.1`
-- **前端**：`@simplewebauthn/browser@^10.0.0`
+- **后端**：`@simplewebauthn/server@^13.2.2`
+- **前端**：`@simplewebauthn/browser@^13.2.2`
+
+> **注意**：使用 SimpleWebAuthn v13 最新版本，提供更好的安全性和兼容性。
 
 ### 2. 运行数据库迁移
 

@@ -43,8 +43,18 @@ export default function PasskeyLogin({ email, onSuccess }: PasskeyLoginProps) {
 
       if (error.name === 'NotAllowedError') {
         toast.error('Passkey authentication was cancelled')
+      } else if (error.name === 'InvalidStateError') {
+        toast.error('No matching passkey found on this device')
+      } else if (error.name === 'NotSupportedError') {
+        toast.error('Passkeys are not supported on this device')
+      } else if (error.name === 'AbortError') {
+        toast.error('Passkey authentication timed out')
+      } else if (error.name === 'NetworkError') {
+        toast.error('Network error. Please check your connection')
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message)
+      } else if (error.message) {
+        toast.error(`Authentication failed: ${error.message}`)
       } else {
         toast.error('Failed to authenticate with passkey')
       }
