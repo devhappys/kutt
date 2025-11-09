@@ -24,6 +24,9 @@ RUN pnpm build
 # ==================== Stage 2: Build Backend ====================
 FROM node:24-alpine AS backend-builder
 
+# install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -38,6 +41,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 # ==================== Stage 3: Production Image ====================
 FROM node:24-alpine
+
+# install runtime dependencies for native modules
+RUN apk add --no-cache libstdc++
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
