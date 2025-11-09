@@ -17,6 +17,68 @@ const redirectMiddleware = require("../middleware/redirect.middleware");
 const CustomError = utils.CustomError;
 const dnsLookup = promisify(dns.lookup);
 
+// Helper function to check click limits
+async function checkClickLimits(link) {
+  if (!link.max_clicks) return { allowed: true };
+  
+  const period = link.click_limit_period || 'total';
+  const now = new Date();
+  
+  // For total clicks
+  if (period === 'total') {
+    if (link.visit_count >= link.max_clicks) {
+      return { allowed: false, reason: 'Total click limit reached' };
+    }
+    return { allowed: true };
+  }
+  
+  // For period-based limits, we need to check the period start and count
+  if (link.click_period_start) {
+    const periodStart = new Date(link.click_period_start);
+    const periodDuration = {
+      hour: 60 * 60 * 1000,
+      day: 24 * 60 * 60 * 1000,
+      week: 7 * 24 * 60 * 60 * 1000,
+      month: 30 * 24 * 60 * 60 * 1000
+    };
+    
+    const elapsed = now - periodStart;
+    const duration = periodDuration[period];
+    
+    if (duration && elapsed < duration) {
+      // Still in the same period
+      if (link.click_count_period >= link.max_clicks) {
+        return { allowed: false, reason: `Click limit for this ${period} reached` };
+      }
+      return { allowed: true, resetPeriod: false };
+    } else {
+      // Period expired, reset
+      return { allowed: true, resetPeriod: true };
+    }
+  }
+  
+  // First click in this period
+  return { allowed: true, resetPeriod: true };
+}
+
+// Helper function to build target URL with UTM parameters
+function buildTargetURL(link) {
+  let targetURL = link.target;
+  
+  // Add UTM parameters if provided
+  if (link.utm_campaign || link.utm_source || link.utm_medium) {
+    const url = new URL.URL(targetURL);
+    
+    if (link.utm_campaign) url.searchParams.append('utm_campaign', link.utm_campaign);
+    if (link.utm_source) url.searchParams.append('utm_source', link.utm_source);
+    if (link.utm_medium) url.searchParams.append('utm_medium', link.utm_medium);
+    
+    targetURL = url.toString();
+  }
+  
+  return targetURL;
+}
+
 async function get(req, res) {
   const { limit, skip } = req.context;
   const search = req.query.search;
@@ -226,28 +288,79 @@ async function edit(req, res) {
     [req.body.target, "target"], 
     [req.body.description, "description"], 
     [req.body.expire_in, "expire_in"], 
-    [req.body.password, "password"]
+    [req.body.password, "password"],
+    // Advanced features
+    [req.body.max_clicks, "max_clicks"],
+    [req.body.click_limit_period, "click_limit_period"],
+    [req.body.redirect_type, "redirect_type"],
+    [req.body.enable_analytics, "enable_analytics"],
+    [req.body.public_stats, "public_stats"],
+    [req.body.meta_title, "meta_title"],
+    [req.body.meta_description, "meta_description"],
+    [req.body.meta_image, "meta_image"],
+    [req.body.utm_campaign, "utm_campaign"],
+    [req.body.utm_source, "utm_source"],
+    [req.body.utm_medium, "utm_medium"]
   ].forEach(([value, name]) => {
-    if (!value) {
-      if (name === "password" && link.password) 
-        req.body.password = null;
-      else {
-        delete req.body[name];
-        return;
-      }
-    }
-    if (value === link[name] && name !== "password") {
+    // Allow null/undefined for clearable fields
+    const isClearableField = [
+      "password", "description", "expire_in",
+      "max_clicks", "click_limit_period", "redirect_type",
+      "meta_title", "meta_description", "meta_image",
+      "utm_campaign", "utm_source", "utm_medium"
+    ].includes(name);
+    
+    // Allow false for boolean fields
+    const isBooleanField = ["enable_analytics", "public_stats"].includes(name);
+    
+    if (value === undefined || (value === null && !isClearableField)) {
       delete req.body[name];
       return;
     }
-    if (name === "expire_in" && link.expire_in)
-      if (Math.abs(differenceInSeconds(utils.parseDatetime(value), utils.parseDatetime(link.expire_in))) < 60)
-          return;
-    if (name === "password")
+    
+    // Handle password special case
+    if (name === "password") {
+      if (!value && link.password) {
+        req.body.password = null;
+        isChanged = true;
+        return;
+      }
       if (value && value.replace(/•/ig, "").length === 0) {
         delete req.body.password;
         return;
       }
+    }
+    
+    // Handle expire_in special case
+    if (name === "expire_in" && link.expire_in) {
+      if (Math.abs(differenceInSeconds(utils.parseDatetime(value), utils.parseDatetime(link.expire_in))) < 60) {
+        delete req.body[name];
+        return;
+      }
+    }
+    
+    // Check if value changed (handle booleans and nulls)
+    if (isBooleanField) {
+      if (value !== link[name]) {
+        isChanged = true;
+      } else {
+        delete req.body[name];
+      }
+      return;
+    }
+    
+    // For clearable fields, allow setting to null
+    if (value === null && isClearableField && link[name] !== null) {
+      isChanged = true;
+      return;
+    }
+    
+    // Regular value comparison
+    if (value === link[name] && name !== "password") {
+      delete req.body[name];
+      return;
+    }
+    
     isChanged = true;
   });
 
@@ -255,7 +368,13 @@ async function edit(req, res) {
     throw new CustomError("Should at least update one field.");
   }
 
-  const { address, target, description, expire_in, password } = req.body;
+  const { 
+    address, target, description, expire_in, password,
+    // Advanced features
+    max_clicks, click_limit_period, redirect_type, enable_analytics, public_stats,
+    meta_title, meta_description, meta_image,
+    utm_campaign, utm_source, utm_medium
+  } = req.body;
   
   const targetDomain = target && utils.removeWww(URL.parse(target).hostname);
   const domain_id = link.domain_id || null;
@@ -277,18 +396,30 @@ async function edit(req, res) {
     throw new CustomError("Custom URL is already in use.");
   }
 
-  // Update link
+  // Update link with all fields including advanced features
+  const updateData = {
+    ...(address && { address }),
+    ...(description !== undefined && { description }),
+    ...(target && { target }),
+    ...(expire_in !== undefined && { expire_in }),
+    ...((password !== undefined) && { password }),
+    // Advanced features
+    ...(max_clicks !== undefined && { max_clicks }),
+    ...(click_limit_period !== undefined && { click_limit_period }),
+    ...(redirect_type !== undefined && { redirect_type }),
+    ...(enable_analytics !== undefined && { enable_analytics }),
+    ...(public_stats !== undefined && { public_stats }),
+    ...(meta_title !== undefined && { meta_title }),
+    ...(meta_description !== undefined && { meta_description }),
+    ...(meta_image !== undefined && { meta_image }),
+    ...(utm_campaign !== undefined && { utm_campaign }),
+    ...(utm_source !== undefined && { utm_source }),
+    ...(utm_medium !== undefined && { utm_medium })
+  };
+  
   const [updatedLink] = await query.link.update(
-    {
-      id: link.id
-    },
-    {
-      ...(address && { address }),
-      ...(description && { description }),
-      ...(target && { target }),
-      ...(expire_in && { expire_in }),
-      ...((password || password === null) && { password })
-    }
+    { id: link.id },
+    updateData
   );
 
   if (req.isHTML) {
@@ -559,7 +690,43 @@ async function redirect(req, res, next) {
     return;
   }
 
-  // 7. If link is protected, redirect to password page
+  // 7. Check click limits
+  const clickCheck = await checkClickLimits(link);
+  if (!clickCheck.allowed) {
+    // Click limit reached - return 410 Gone status
+    if (req.isHTML) {
+      res.status(410).render("error", {
+        title: "Link expired",
+        message: clickCheck.reason || "This link has reached its click limit."
+      });
+      return;
+    }
+    return res.status(410).send({ 
+      message: clickCheck.reason || "Link has reached its click limit." 
+    });
+  }
+  
+  // Update click count for period-based limits
+  if (link.max_clicks && link.click_limit_period && link.click_limit_period !== 'total') {
+    if (clickCheck.resetPeriod) {
+      // Reset the period counter
+      await query.link.update(
+        { id: link.id },
+        { 
+          click_count_period: 1, 
+          click_period_start: new Date() 
+        }
+      );
+    } else {
+      // Increment the period counter
+      await query.link.update(
+        { id: link.id },
+        { click_count_period: (link.click_count_period || 0) + 1 }
+      );
+    }
+  }
+
+  // 8. If link is protected, redirect to password page
   if (link.password) {
     if ("authorization" in req.headers) {
       const auth = req.headers.authorization;
@@ -573,7 +740,12 @@ async function redirect(req, res, next) {
           if (colon !== -1) {
             const password = decoded.slice(colon + 1);
             const matches = await bcrypt.compare(password, link.password);
-            if (matches) return res.redirect(link.target);
+            if (matches) {
+              // Build target URL with UTM parameters
+              const targetURL = buildTargetURL(link);
+              const redirectType = link.redirect_type || 302;
+              return res.redirect(redirectType, targetURL);
+            }
           }
         }
       }
@@ -585,9 +757,11 @@ async function redirect(req, res, next) {
     return;
   }
 
-  // 8. Create link visit
+  // 9. Create link visit (only if analytics is enabled)
   const isBot = isbot(req.headers["user-agent"]);
-  if (link.user_id && !isBot) {
+  const analyticsEnabled = link.enable_analytics !== false; // Default to true if not set
+  
+  if (link.user_id && !isBot && analyticsEnabled) {
     queue.visit.add({
       userAgent: req.headers["user-agent"],
       ip: req.ip,
@@ -601,8 +775,11 @@ async function redirect(req, res, next) {
     });
   }
 
-  // 9. Redirect to target
-  return res.redirect(link.target);
+  // 10. Build target URL with UTM parameters and redirect
+  const targetURL = buildTargetURL(link);
+  const redirectType = link.redirect_type || 302; // Default to 302 if not set
+  
+  return res.redirect(redirectType, targetURL);
 };
 
 async function redirectProtected(req, res) {
@@ -622,8 +799,10 @@ async function redirectProtected(req, res) {
     throw new CustomError("Password is not correct.", 401);
   }
 
-  // 4. Create visit
-  if (link.user_id) {
+  // 4. Create visit (only if analytics is enabled)
+  const analyticsEnabled = link.enable_analytics !== false; // Default to true if not set
+  
+  if (link.user_id && analyticsEnabled) {
     queue.visit.add({
       userAgent: req.headers["user-agent"],
       ip: req.ip,
@@ -637,16 +816,19 @@ async function redirectProtected(req, res) {
     });
   }
 
-  // 5. Send target
+  // 5. Build target URL with UTM parameters
+  const targetURL = buildTargetURL(link);
+  
+  // 6. Send target
   if (req.isHTML) {
-    res.setHeader("HX-Redirect", link.target);
+    res.setHeader("HX-Redirect", targetURL);
     res.render("partials/protected/form", {
       id: link.uuid,
       message: "Redirecting...",
     });
     return;
   }
-  return res.status(200).send({ target: link.target });
+  return res.status(200).send({ target: targetURL });
 };
 
 async function redirectCustomDomainHomepage(req, res, next) {
