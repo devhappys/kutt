@@ -47,8 +47,8 @@ WORKDIR /app
 
 # create data directory with correct permissions
 # Note: node:alpine already has 'node' user with UID/GID 1000
-RUN mkdir -p /var/lib/hapxs-surl && \
-    chown -R node:node /var/lib/hapxs-surl && \
+RUN mkdir -p /var/lib/kutt && \
+    chown -R node:node /var/lib/kutt && \
     chown -R node:node /app
 
 # copy backend dependencies from builder
@@ -84,4 +84,4 @@ ENV NODE_ENV=production \
 USER node
 
 # initialize database and run the app using startup script
-CMD ["./startup.sh"]
+CMD ["sh", "./startup.sh"]
