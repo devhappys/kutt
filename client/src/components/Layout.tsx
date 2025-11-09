@@ -3,8 +3,6 @@ import {
   Home,
   Link as LinkIcon,
   Tag,
-  BarChart3,
-  Shield,
   Settings,
   LogOut
 } from 'lucide-react'

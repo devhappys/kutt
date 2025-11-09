@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { securityApi } from '@/lib/api'
 import { 
   Shield, Plus, Trash2, X, Globe, Zap, ArrowRight, 
-  ArrowLeft, AlertTriangle, CheckCircle, Edit2,
+  ArrowLeft, AlertTriangle, CheckCircle,
   Smartphone, Clock, Target
 } from 'lucide-react'
 import toast from 'react-hot-toast'

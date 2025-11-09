@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { statsApi, linksApi } from '@/lib/api'
@@ -12,7 +11,6 @@ import toast from 'react-hot-toast'
 
 export default function StatsPage() {
   const { linkId } = useParams<{ linkId: string }>()
-  const dateRange = 'week' as 'day' | 'week' | 'month'
 
   const { data: linkData } = useQuery({
     queryKey: ['link', linkId],
