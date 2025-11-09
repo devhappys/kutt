@@ -37,13 +37,14 @@ COPY package.json pnpm-lock.yaml ./
 
 # install backend dependencies (production only)
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --prod --frozen-lockfile
+    pnpm install --prod --frozen-lockfile && \
+    pnpm rebuild better-sqlite3
 
 # ==================== Stage 3: Production Image ====================
 FROM node:24-alpine
 
 # install runtime dependencies for native modules
-RUN apk add --no-cache libstdc++
+RUN apk add --no-cache libstdc++ gcompat
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
