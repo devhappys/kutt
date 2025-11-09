@@ -69,6 +69,10 @@ COPY --from=frontend-builder --chown=node:node /app/client/dist ./client/dist
 # copy static assets
 COPY --chown=node:node static ./static
 
+# copy startup script
+COPY --chown=node:node startup.sh ./
+RUN chmod +x startup.sh
+
 # expose ports
 EXPOSE 3000 3001
 
@@ -79,5 +83,5 @@ ENV NODE_ENV=production \
 # switch to non-root user (node user with UID/GID 1000)
 USER node
 
-# initialize database and run the app
-CMD ["sh", "-c", "node node_modules/.bin/knex migrate:latest && node --enable-source-maps server/server.js --production"]
+# initialize database and run the app using startup script
+CMD ["./startup.sh"]
