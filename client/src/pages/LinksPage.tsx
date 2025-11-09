@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { linksApi, tagsApi, qrcodeApi } from '@/lib/api'
 import { 
@@ -559,15 +559,36 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
   const [size, setSize] = useState(300)
   const [qrData, setQRData] = useState<string | null>(null)
 
+  // Clean up blob URL when format changes or component unmounts
+  useEffect(() => {
+    return () => {
+      if (qrData && qrData.startsWith('blob:')) {
+        URL.revokeObjectURL(qrData)
+      }
+    }
+  }, [qrData])
+
+  // Reset QR data when format or size changes
+  useEffect(() => {
+    setQRData(null)
+  }, [format, size])
+
   const generateQR = useMutation({
     mutationFn: () => qrcodeApi.generate(linkId, { format, size }),
     onSuccess: (response) => {
       if (format === 'dataurl') {
-        setQRData(response.data.qrcode)
+        // For dataurl format, response.data is JSON with qrcode property
+        setQRData(response.data?.qrcode || response.data)
       } else {
-        const url = URL.createObjectURL(response.data)
+        // For png/svg, response.data is a Blob
+        const blob = response.data
+        const url = URL.createObjectURL(blob)
         setQRData(url)
       }
+      toast.success('QR Code generated!')
+    },
+    onError: () => {
+      toast.error('Failed to generate QR Code')
     },
   })
 
@@ -575,8 +596,18 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
     if (!qrData) return
     const a = document.createElement('a')
     a.href = qrData
-    a.download = `qr-${linkId}.${format === 'svg' ? 'svg' : 'png'}`
+    
+    // Set proper file extension based on format
+    let extension = 'png'
+    if (format === 'svg') extension = 'svg'
+    else if (format === 'dataurl') extension = 'png'
+    
+    a.download = `qr-${linkId}.${extension}`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
+    
+    toast.success('QR Code downloaded!')
   }
 
   return (
