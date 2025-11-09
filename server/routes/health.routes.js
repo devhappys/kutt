@@ -17,6 +17,14 @@ router.get(
   asyncHandler(health.memoryStats)
 );
 
+// Performance stats (admin only)
+router.get(
+  "/performance",
+  asyncHandler(auth.jwt),
+  asyncHandler(auth.admin),
+  asyncHandler(health.performanceStats)
+);
+
 // Manual garbage collection trigger (admin only)
 router.post(
   "/gc",

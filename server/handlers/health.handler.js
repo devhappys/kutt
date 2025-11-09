@@ -1,4 +1,5 @@
 const memoryMonitor = require("../utils/memoryMonitor");
+const { monitor: perfMonitor, requestCounter } = require("../utils/performanceMonitor");
 
 /**
  * Health check endpoint
@@ -43,6 +44,22 @@ async function memoryStats(req, res) {
 }
 
 /**
+ * Performance stats endpoint (admin only)
+ */
+async function performanceStats(req, res) {
+  const perfMetrics = perfMonitor.getAllMetrics();
+  const slowOps = perfMonitor.getSlowOperations(20);
+  const reqStats = requestCounter.getStats();
+
+  return res.status(200).json({
+    performance: perfMetrics,
+    slowOperations: slowOps,
+    requests: reqStats,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
  * Trigger manual garbage collection (admin only)
  */
 async function triggerGC(req, res) {
@@ -78,6 +95,7 @@ async function clearCaches(req, res) {
 module.exports = {
   healthCheck,
   memoryStats,
+  performanceStats,
   triggerGC,
   clearCaches,
 };

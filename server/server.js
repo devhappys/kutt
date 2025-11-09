@@ -1,6 +1,8 @@
 const env = require("./env");
 
 const cookieParser = require("cookie-parser");
+const compression = require("compression");
+const responseTime = require("response-time");
 const passport = require("passport");
 const express = require("express");
 const helmet = require("helmet");
@@ -39,18 +41,60 @@ if (env.TRUST_PROXY) {
   app.set("trust proxy", true);
 }
 
+// Performance monitoring - add X-Response-Time header
+app.use(responseTime());
+
+// Compression middleware - compress all responses
+app.use(compression({
+  level: 6, // Balance between speed and compression ratio
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    // Don't compress for Server-Sent Events or if no-transform is set
+    if (req.headers['x-no-compression'] || res.getHeader('Content-Type')?.includes('text/event-stream')) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' })); // Limit request body size
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// serve static
-app.use("/images", express.static("custom/images"));
-app.use("/css", express.static("custom/css", { extensions: ["css"] }));
-app.use(express.static("static"));
+// serve static with caching and optimization
+const staticOptions = {
+  maxAge: env.NODE_ENV === 'production' ? '1y' : 0, // Cache for 1 year in production
+  etag: true,
+  lastModified: true,
+  immutable: true, // Assets won't change
+  setHeaders: (res, path) => {
+    // Set cache control based on file type
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else if (path.match(/\.(js|css|woff2|woff|ttf|svg|png|jpg|jpeg|gif|ico)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+};
 
-// serve frontend SPA
-app.use("/app", express.static(path.join(__dirname, "../client/dist")));
+app.use("/images", express.static("custom/images", staticOptions));
+app.use("/css", express.static("custom/css", { ...staticOptions, extensions: ["css"] }));
+app.use(express.static("static", staticOptions));
+
+// serve frontend SPA with caching
+app.use("/app", express.static(path.join(__dirname, "../client/dist"), {
+  maxAge: 0, // Don't cache index.html
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // SPA fallback - handle client-side routing
 app.get("/app/*", (req, res) => {

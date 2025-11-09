@@ -32,6 +32,7 @@
     "bcryptjs": "2.4.3",
     "better-sqlite3": "11.8.1",
     "bull": "4.16.5",
+    "compression": "^1.8.1",
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "date-fns": "2.30.0",
@@ -60,6 +61,7 @@
     "pg-query-stream": "4.7.1",
     "qrcode": "1.5.4",
     "rate-limit-redis": "4.2.0",
+    "response-time": "^2.3.4",
     "speakeasy": "^2.0.0",
     "useragent": "2.3.0"
   },

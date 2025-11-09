@@ -17,14 +17,42 @@ const db = knex({
     password: env.DB_PASSWORD,
     ssl: env.DB_SSL,
     ...(isMySQL && {
-      charset: 'utf8mb4'
+      charset: 'utf8mb4',
+      timezone: 'Z', // Use UTC
+      typeCast: function(field, next) {
+        // Optimize BIGINT handling
+        if (field.type === 'LONGLONG') {
+          return field.string();
+        }
+        return next();
+      }
     }),
-    pool: {
-      min: env.DB_POOL_MIN,
-      max: env.DB_POOL_MAX
+    ...(isPostgres && {
+      statement_timeout: 30000, // 30 second timeout
+      idle_in_transaction_session_timeout: 60000 // 60 second timeout
+    })
+  },
+  pool: {
+    min: env.DB_POOL_MIN || 2,
+    max: env.DB_POOL_MAX || 10,
+    acquireTimeoutMillis: 30000,
+    idleTimeoutMillis: 30000,
+    reapIntervalMillis: 1000,
+    createRetryIntervalMillis: 200,
+    propagateCreateError: false,
+    afterCreate: function(conn, done) {
+      // PostgreSQL optimizations
+      if (isPostgres) {
+        conn.query('SET SESSION statement_timeout = 30000;', function(err) {
+          done(err, conn);
+        });
+      } else {
+        done(null, conn);
+      }
     }
   },
   useNullAsDefault: true,
+  asyncStackTraces: env.NODE_ENV !== 'production', // Disable in production for performance
   log: {
     warn(message) {
       // Suppress MySQL .returning() warnings as it's expected behavior

@@ -9,7 +9,52 @@ if (env.REDIS_ENABLED) {
     host: env.REDIS_HOST,
     port: env.REDIS_PORT,
     db: env.REDIS_DB,
-    ...(env.REDIS_PASSWORD && { password: env.REDIS_PASSWORD })
+    ...(env.REDIS_PASSWORD && { password: env.REDIS_PASSWORD }),
+    // Performance optimizations
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: true,
+    enableOfflineQueue: true,
+    connectTimeout: 10000,
+    // Keep connections alive
+    keepAlive: 30000,
+    // Retry strategy
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    // Reconnect on error
+    reconnectOnError(err) {
+      const targetError = 'READONLY';
+      if (err.message.includes(targetError)) {
+        return true;
+      }
+      return false;
+    },
+    // Lazy connect
+    lazyConnect: false,
+    // Command queue size limit
+    commandQueueHighWaterMark: 1000,
+  });
+
+  // Error handling
+  client.on('error', (err) => {
+    console.error('[Redis] Connection error:', err);
+  });
+
+  client.on('connect', () => {
+    console.log('[Redis] Connected successfully');
+  });
+
+  client.on('ready', () => {
+    console.log('[Redis] Ready to accept commands');
+  });
+
+  client.on('close', () => {
+    console.log('[Redis] Connection closed');
+  });
+
+  client.on('reconnecting', () => {
+    console.log('[Redis] Reconnecting...');
   });
 }
 
