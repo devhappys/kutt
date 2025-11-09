@@ -17,6 +17,7 @@ permissions:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    if: (github.actor == 'happy-clo' || github.actor == 'Happy-clo' || github.actor == 'actions-user' || github.actor == 'hapxscom' || github.actor == 'devhappys') && !contains(github.event.head_commit.message, 'npm(deps):')
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -76,3 +77,24 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Install Node.js dependencies
+        run: |
+          npm install ssh2 dotenv axios
+
+      - name: Set script permissions
+        run: |
+          chmod +x .github/workflows/deploy_image.js
+
+      - name: Run deployment script
+        if: github.event_name != 'pull_request'
+        env:
+          SERVER_ADDRESS: ${{ secrets.SERVER_ADDRESS }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PORT: ${{ secrets.PORT }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          CONTAINER_NAMES: ${{ secrets.CONTAINER_NAMES }}
+          IMAGE_URL: ghcr.io/${{ steps.meta.outputs.lower_repo }}:${{ steps.meta.outputs.short_sha }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          node .github/workflows/deploy_image.js
