@@ -41,6 +41,7 @@ FROM node:24-alpine
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 # set working directory
 WORKDIR /app
@@ -79,8 +80,7 @@ EXPOSE 3000 3001
 # set environment variables
 ENV NODE_ENV=production \
     HOME=/app
-RUN corepack enable && corepack install --global pnpm@10.20.1
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
 
 # switch to non-root user (node user with UID/GID 1000)
 USER node
