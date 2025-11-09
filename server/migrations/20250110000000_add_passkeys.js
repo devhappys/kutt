@@ -6,7 +6,7 @@ exports.up = async function(knex) {
       table.string("id", 255).primary();
       table.integer("user_id").unsigned().notNullable();
       table.string("name", 255).notNullable(); // User-friendly name for the passkey
-      table.text("credential_id").notNullable(); // Base64URL encoded credential ID
+      table.string("credential_id", 1024).notNullable(); // Base64URL encoded credential ID (changed from text to varchar)
       table.text("credential_public_key").notNullable(); // Base64URL encoded public key
       table.integer("counter").unsigned().notNullable().defaultTo(0); // Signature counter
       table.string("transports", 255); // Comma-separated list of transports
@@ -18,7 +18,7 @@ exports.up = async function(knex) {
       
       // Index for faster lookups
       table.index("user_id");
-      table.index("credential_id", null, "btree");
+      table.index("credential_id"); // Removed BTREE specification for MySQL compatibility
     });
   }
   

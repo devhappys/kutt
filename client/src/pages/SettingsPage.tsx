@@ -6,6 +6,7 @@ import { User, Key, Copy, Eye, EyeOff, Save, Mail, Shield, Globe, Lock, Trash2, 
 import toast from 'react-hot-toast'
 import { copyToClipboard } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
+import PasskeyManager from '@/components/PasskeyManager'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'api' | 'domains' | 'security'>('profile')
@@ -406,6 +407,11 @@ function SecuritySection() {
 
       {/* Two-Factor Authentication */}
       <TwoFactorAuthSection />
+
+      {/* Passkey Authentication */}
+      <div className="mt-6">
+        <PasskeyManager />
+      </div>
 
       {/* Delete Account */}
       <DeleteAccountSection />

@@ -5,6 +5,7 @@ import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
 import { Link2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
+import PasskeyLogin from '@/components/PasskeyLogin'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -52,6 +53,23 @@ export default function LoginPage() {
   }
 
   const isPending = loginMutation.isPending || signupMutation.isPending
+
+  const handlePasskeySuccess = (token: string, apikey: string) => {
+    // Store token in localStorage for API authentication
+    localStorage.setItem('token', token)
+    
+    // Fetch user data with the token
+    authApi.getUser()
+      .then((response) => {
+        const user = response.data
+        setAuth(user, apikey)
+        toast.success('Signed in with passkey!')
+        navigate('/app')
+      })
+      .catch(() => {
+        toast.error('Failed to fetch user data')
+      })
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 via-white to-blue-50 px-6 py-12 animate-gradient bg-300">
@@ -169,6 +187,25 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Passkey Login - Only show in login mode */}
+          {isLogin && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <PasskeyLogin
+                email={formData.email}
+                onSuccess={handlePasskeySuccess}
+              />
+            </>
+          )}
 
           {/* Alternative Actions */}
           <div className="mt-6 text-center">
