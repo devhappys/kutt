@@ -5,7 +5,7 @@ import { securityApi } from '@/lib/api'
 import { 
   Shield, Plus, Trash2, X, Globe, Zap, ArrowRight, 
   ArrowLeft, AlertTriangle, CheckCircle,
-  Smartphone, Clock, Target, Edit
+  Smartphone, Clock, Edit
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -236,7 +236,6 @@ function IPRulesSection({ linkId }: { linkId: string }) {
 
       {editingRule && (
         <EditIPRuleModal
-          linkId={linkId}
           rule={editingRule}
           onClose={() => setEditingRule(null)}
         />
@@ -358,7 +357,7 @@ function IPRuleModal({ linkId, onClose }: { linkId: string; onClose: () => void 
   )
 }
 
-function EditIPRuleModal({ linkId, rule, onClose }: { linkId: string; rule: any; onClose: () => void }) {
+function EditIPRuleModal({ rule, onClose }: { rule: any; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [formData, setFormData] = useState({
     ip_address: rule.ip_address || rule.ip_range || '',
