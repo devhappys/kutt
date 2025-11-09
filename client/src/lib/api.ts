@@ -310,6 +310,30 @@ export const authApi = {
     
     getStatus: () => api.get('/auth/2fa/status'),
   },
+  
+  // Passkey (WebAuthn) Authentication
+  passkey: {
+    registerInit: () => api.post('/auth/passkey/register/init'),
+    
+    registerVerify: (data: { credential: any; name: string }) =>
+      api.post('/auth/passkey/register/verify', data),
+    
+    authenticateInit: (data: { email: string }) =>
+      api.post('/auth/passkey/authenticate/init', data),
+    
+    authenticateVerify: (data: { email: string; credential: any }) =>
+      api.post('/auth/passkey/authenticate/verify', data),
+    
+    list: () => api.get('/auth/passkey/list'),
+    
+    remove: (id: string, data: { password: string }) =>
+      api.delete(`/auth/passkey/${id}`, { data }),
+    
+    rename: (id: string, data: { name: string }) =>
+      api.patch(`/auth/passkey/${id}/rename`, data),
+    
+    getStatus: () => api.get('/auth/passkey/status'),
+  },
 }
 
 // ==================== Users API ====================

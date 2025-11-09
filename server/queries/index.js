@@ -6,6 +6,7 @@ const host = require("./host.queries");
 const tag = require("./tag.queries");
 const stats = require("./stats.queries");
 const security = require("./security.queries");
+const passkey = require("./passkey");
 
 module.exports = {
   domain,
@@ -15,5 +16,6 @@ module.exports = {
   visit,
   tag,
   stats,
-  security
+  security,
+  passkey
 };

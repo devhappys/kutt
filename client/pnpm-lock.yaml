@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@simplewebauthn/browser':
+        specifier: ^13.2.2
+        version: 13.2.2
       '@tanstack/react-query':
         specifier: ^5.17.0
         version: 5.90.7(react@19.2.0)
@@ -433,6 +436,9 @@ packages:
     resolution: {integrity: sha512-rLarc1Ofcs3DHtgSzFO31pZsCh8g05R2azN1q3fF+H423Co87My0R+tazOEvYVKXSLh8C4LerMK41/K7wlklcg==}
     cpu: [x64]
     os: [win32]
+
+  '@simplewebauthn/browser@13.2.2':
+    resolution: {integrity: sha512-FNW1oLQpTJyqG5kkDg5ZsotvWgmBaC6jCHR7Ej0qUNep36Wl9tj2eZu7J5rP+uhXgHaLk+QQ3lqcw2vS5MX1IA==}
 
   '@swc/core-darwin-arm64@1.15.1':
     resolution: {integrity: sha512-vEPrVxegWIjKEz+1VCVuKRY89jhokhSmQ/YXBWLnmLj9cI08G61RTZJvdsIcjYUjjTu7NgZlYVK+b2y0fbh11g==}
@@ -1973,6 +1979,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.53.1':
     optional: true
+
+  '@simplewebauthn/browser@13.2.2': {}
 
   '@swc/core-darwin-arm64@1.15.1':
     optional: true

@@ -6,6 +6,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const locals = require("../handlers/locals.handler");
 const auth = require("../handlers/auth.handler");
 const twofa = require("../handlers/twofa.handler");
+const passkey = require("../handlers/passkey.handler");
 const utils = require("../utils");
 const env = require("../env");
 
@@ -136,6 +137,59 @@ router.get(
   "/2fa/status",
   asyncHandler(auth.jwt),
   asyncHandler(twofa.getStatus)
+);
+
+// Passkey (WebAuthn) Routes
+router.post(
+  "/passkey/register/init",
+  asyncHandler(auth.jwt),
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.registerInit)
+);
+
+router.post(
+  "/passkey/register/verify",
+  asyncHandler(auth.jwt),
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.registerVerify)
+);
+
+router.post(
+  "/passkey/authenticate/init",
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.authenticateInit)
+);
+
+router.post(
+  "/passkey/authenticate/verify",
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.authenticateVerify)
+);
+
+router.get(
+  "/passkey/list",
+  asyncHandler(auth.jwt),
+  asyncHandler(passkey.list)
+);
+
+router.delete(
+  "/passkey/:id",
+  asyncHandler(auth.jwt),
+  helpers.rateLimit({ window: 60, limit: 5 }),
+  asyncHandler(passkey.remove)
+);
+
+router.patch(
+  "/passkey/:id/rename",
+  asyncHandler(auth.jwt),
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.rename)
+);
+
+router.get(
+  "/passkey/status",
+  asyncHandler(auth.jwt),
+  asyncHandler(passkey.getStatus)
 );
 
 module.exports = router;

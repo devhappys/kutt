@@ -1,0 +1,54 @@
+exports.up = async function(knex) {
+  // Create passkeys table for WebAuthn credentials
+  const hasTable = await knex.schema.hasTable("passkeys");
+  if (!hasTable) {
+    await knex.schema.createTable("passkeys", table => {
+      table.string("id", 255).primary();
+      table.integer("user_id").unsigned().notNullable();
+      table.string("name", 255).notNullable(); // User-friendly name for the passkey
+      table.text("credential_id").notNullable(); // Base64URL encoded credential ID
+      table.text("credential_public_key").notNullable(); // Base64URL encoded public key
+      table.integer("counter").unsigned().notNullable().defaultTo(0); // Signature counter
+      table.string("transports", 255); // Comma-separated list of transports
+      table.timestamp("created_at").defaultTo(knex.fn.now());
+      table.timestamp("last_used").nullable();
+      
+      // Foreign key
+      table.foreign("user_id").references("users.id").onDelete("CASCADE");
+      
+      // Index for faster lookups
+      table.index("user_id");
+      table.index("credential_id", null, "btree");
+    });
+  }
+  
+  // Add passkey_enabled flag to users table
+  const hasUsersTable = await knex.schema.hasTable("users");
+  if (hasUsersTable) {
+    const hasPasskeyEnabled = await knex.schema.hasColumn("users", "passkey_enabled");
+    if (!hasPasskeyEnabled) {
+      await knex.schema.table("users", table => {
+        table.boolean("passkey_enabled").notNullable().defaultTo(false);
+      });
+    }
+  }
+};
+
+exports.down = async function(knex) {
+  // Remove passkey_enabled from users table
+  const hasUsersTable = await knex.schema.hasTable("users");
+  if (hasUsersTable) {
+    const hasPasskeyEnabled = await knex.schema.hasColumn("users", "passkey_enabled");
+    if (hasPasskeyEnabled) {
+      await knex.schema.table("users", table => {
+        table.dropColumn("passkey_enabled");
+      });
+    }
+  }
+  
+  // Drop passkeys table
+  const hasTable = await knex.schema.hasTable("passkeys");
+  if (hasTable) {
+    await knex.schema.dropTable("passkeys");
+  }
+};

@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/devhappys/hapxs-surl#readme",
   "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
     "bcryptjs": "2.4.3",
     "better-sqlite3": "11.8.1",
     "bull": "4.16.5",
