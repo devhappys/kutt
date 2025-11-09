@@ -67,7 +67,7 @@ COPY --from=frontend-builder /app/client/dist ./client/dist
 COPY static ./static
 
 # expose ports
-EXPOSE 3000
+EXPOSE 3000 3001
 
 # set environment variables
 ENV NODE_ENV=production
