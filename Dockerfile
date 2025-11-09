@@ -25,7 +25,7 @@ RUN pnpm build
 FROM node:24-alpine AS backend-builder
 
 # install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ linux-headers sqlite-dev
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -37,14 +37,16 @@ COPY package.json pnpm-lock.yaml ./
 
 # install backend dependencies (production only)
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --prod --frozen-lockfile && \
-    pnpm rebuild better-sqlite3
+    pnpm install --prod --frozen-lockfile
+
+# rebuild native modules for alpine linux
+RUN pnpm rebuild better-sqlite3 --build-from-source
 
 # ==================== Stage 3: Production Image ====================
 FROM node:24-alpine
 
 # install runtime dependencies for native modules
-RUN apk add --no-cache libstdc++ gcompat
+RUN apk add --no-cache libstdc++ sqlite-libs
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
