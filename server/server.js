@@ -53,11 +53,6 @@ app.get("/app/*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
-// redirect root to SPA
-app.get("/", (req, res) => {
-  res.redirect("/app");
-});
-
 app.use(passport.initialize());
 app.use(locals.isHTML);
 app.use(locals.config);
@@ -75,7 +70,7 @@ utils.registerHandlebarsHelpers();
 app.use(asyncHandler(links.redirectCustomDomainHomepage));
 
 // render html pages
-// app.use("/", routes.render);
+app.use("/", routes.render);
 
 // handle api requests
 app.use("/api/v2", routes.api);

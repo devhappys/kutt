@@ -12,10 +12,9 @@ const router = Router();
 // pages
 router.get(
   "/",
-  asyncHandler(auth.jwtLoosePage),
-  asyncHandler(helpers.adminSetup),
-  asyncHandler(locals.user), 
-  asyncHandler(renders.homepage)
+  (req, res) => {
+    res.redirect("/app");
+  }
 );
 
 router.get(

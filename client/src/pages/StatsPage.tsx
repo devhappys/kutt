@@ -15,12 +15,14 @@ export default function StatsPage() {
   const { data: linkData } = useQuery({
     queryKey: ['link', linkId],
     queryFn: () => linksApi.getAll({ search: linkId }),
+    enabled: !!linkId,
   })
 
   const { data: realtimeData } = useQuery({
     queryKey: ['stats', 'realtime', linkId],
     queryFn: () => statsApi.getRealtime(linkId!),
     refetchInterval: 30000,
+    enabled: !!linkId,
   })
 
   // Heatmap data query (currently unused but available for future features)
@@ -32,29 +34,50 @@ export default function StatsPage() {
   const { data: utmData } = useQuery({
     queryKey: ['stats', 'utm', linkId],
     queryFn: () => statsApi.getUTMStats(linkId!),
+    enabled: !!linkId,
   })
 
   const { data: deviceData } = useQuery({
     queryKey: ['stats', 'devices', linkId],
     queryFn: () => statsApi.getDeviceStats(linkId!),
+    enabled: !!linkId,
   })
 
   const { data: visitsData } = useQuery({
     queryKey: ['stats', 'visits', linkId],
     queryFn: () => statsApi.getVisitDetails(linkId!, { limit: 10 }),
+    enabled: !!linkId,
   })
 
   const link = linkData?.data?.data?.[0]
   const realtime = realtimeData?.data
 
   const handleExport = async (format: 'csv' | 'json') => {
+    if (!linkId) {
+      toast.error('Link ID is missing')
+      return
+    }
     try {
-      const response = await statsApi.exportData(linkId!, format)
+      const response = await statsApi.exportData(linkId, format)
       downloadBlob(response.data, `stats-${linkId}.${format}`)
       toast.success(`Exported as ${format.toUpperCase()}`)
     } catch (error) {
       toast.error('Export failed')
     }
+  }
+
+  if (!linkId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="card max-w-md mx-auto text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link ID Missing</h2>
+          <p className="text-gray-600 mb-4">No link ID was provided in the URL.</p>
+          <Link to="/app/links" className="btn-primary">
+            Back to Links
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

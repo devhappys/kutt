@@ -44,6 +44,20 @@ export default function SecurityPage() {
     },
   ]
 
+  if (!linkId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="card max-w-md mx-auto text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Link ID Missing</h2>
+          <p className="text-gray-600 mb-4">No link ID was provided in the URL.</p>
+          <Link to="/app/links" className="btn-primary">
+            Back to Links
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       {/* Header */}
@@ -129,6 +143,7 @@ function IPRulesSection({ linkId }: { linkId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['ip-rules', linkId],
     queryFn: () => securityApi.getIPRules(linkId),
+    enabled: !!linkId,
   })
 
   const deleteRule = useMutation({
@@ -502,6 +517,7 @@ function GeoRestrictionsSection({ linkId }: { linkId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['geo-restrictions', linkId],
     queryFn: () => securityApi.getGeoRestrictions(linkId),
+    enabled: !!linkId,
   })
 
   const deleteRestriction = useMutation({
@@ -757,6 +773,7 @@ function RateLimitsSection({ linkId }: { linkId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['rate-limits', linkId],
     queryFn: () => securityApi.getRateLimits(linkId),
+    enabled: !!linkId,
   })
 
   const deleteLimit = useMutation({
@@ -972,6 +989,7 @@ function SmartRedirectsSection({ linkId }: { linkId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['redirect-rules', linkId],
     queryFn: () => securityApi.getRedirectRules(linkId),
+    enabled: !!linkId,
   })
 
   const deleteRule = useMutation({
