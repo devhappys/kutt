@@ -6,7 +6,9 @@ services:
        - db_data_sqlite:/var/lib/kutt
        - custom:/kutt/custom
     environment:
+      DB_CLIENT: "better-sqlite3"
       DB_FILENAME: "/var/lib/kutt/data.sqlite"
+      REDIS_ENABLED: "false"
     ports:
       - 3000:3000
 volumes:

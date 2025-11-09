@@ -45,6 +45,14 @@ app.use("/images", express.static("custom/images"));
 app.use("/css", express.static("custom/css", { extensions: ["css"] }));
 app.use(express.static("static"));
 
+// serve frontend SPA
+app.use("/app", express.static(path.join(__dirname, "../client/dist")));
+
+// SPA fallback - handle client-side routing
+app.get("/app/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
+
 app.use(passport.initialize());
 app.use(locals.isHTML);
 app.use(locals.config);
