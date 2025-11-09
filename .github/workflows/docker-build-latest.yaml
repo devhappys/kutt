@@ -1,4 +1,4 @@
-name: docker-build-latest
+name: Build Docker Image For Linux AMD64
 
 env:
   dockerhub_repository: "hapxs-surl/hapxs-surl"
@@ -12,6 +12,7 @@ on:
 jobs:
   dockerhub-build-push:
     runs-on: ubuntu-latest
+    if: (github.actor == 'happy-clo' || github.actor == 'Happy-clo' || github.actor == 'actions-user' || github.actor == 'hapxscom' || github.actor == 'devhappys') && !contains(github.event.head_commit.message, 'npm(deps):')
     steps:
       -
         name: Checkout
@@ -43,3 +44,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ env.dockerhub_repository }}
+      
+      - name: Install Node.js dependencies
+        run: |
+          npm install ssh2 dotenv axios
+
+      - name: Set script permissions
+        run: |
+          chmod +x .github/workflows/deploy_image.js
+
+      - name: Run deployment script
+        if: github.event_name != 'pull_request'
+        env:
+          SERVER_ADDRESS: ${{ secrets.SERVER_ADDRESS }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PORT: ${{ secrets.PORT }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          CONTAINER_NAMES: ${{ secrets.CONTAINER_NAMES }}
+          IMAGE_URL: happyclo/tts-node:${{ steps.meta.outputs.short_sha }}-amd64
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          node .github/workflows/deploy_image.js
