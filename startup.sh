@@ -76,4 +76,5 @@ fi
 echo "Migrations completed successfully"
 echo ""
 echo "Starting server..."
+exec pnpm migrate
 exec pnpm start

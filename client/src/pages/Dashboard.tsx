@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { statsApi, linksApi } from '@/lib/api'
 import { Link } from 'react-router-dom'
-import { 
-  BarChart3, Link as LinkIcon, Eye, TrendingUp, 
+import {
+  BarChart3, Link as LinkIcon, Eye, TrendingUp,
   Plus, Clock, Tag, ExternalLink
 } from 'lucide-react'
 import { formatNumber, formatRelativeTime } from '@/lib/utils'

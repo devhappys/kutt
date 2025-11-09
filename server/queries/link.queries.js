@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const { randomUUID } = require("node:crypto");
 
 const utils = require("../utils");
 const redis = require("../redis");
@@ -205,10 +206,14 @@ async function create(params) {
     encryptedPassword = await bcrypt.hash(params.password, salt);
   }
   
+  // Generate UUID manually for cross-database compatibility
+  const uuid = randomUUID();
+  
   let [link] = await knex(
     "links"
   ).insert(
     {
+      uuid,
       password: encryptedPassword,
       domain_id: params.domain_id || null,
       user_id: params.user_id || null,
