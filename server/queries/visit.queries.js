@@ -55,8 +55,8 @@ async function add(params) {
       // This must also happen in the transaction to avoid concurrency
       await trx("visits").insert({
         [`br_${data.browser}`]: 1,
-        countries: { [data.country]: 1 },
-        referrers: { [data.referrer]: 1 },
+        countries: JSON.stringify({ [data.country]: 1 }),
+        referrers: JSON.stringify({ [data.referrer]: 1 }),
         [`os_${data.os}`]: 1,
         total: 1,
         link_id: data.link_id,
@@ -103,59 +103,59 @@ async function find(match, total) {
 
   const periods = utils.getStatsPeriods(now);
 
-  for await (const visit of visitsStream) {
-    periods.forEach(([type, fromDate]) => {
-      const isIncluded = isAfter(utils.parseDatetime(visit.created_at), fromDate);
-      if (!isIncluded) return;
-      const diffFunction = utils.getDifferenceFunction(type);
-      const diff = diffFunction(now, utils.parseDatetime(visit.created_at));
-      const index = stats[type].views.length - diff - 1;
-      const view = stats[type].views[index];
-      const period = stats[type].stats;
-      const countries = typeof visit.countries === "string" ? JSON.parse(visit.countries) : visit.countries;
-      const referrers = typeof visit.referrers === "string" ? JSON.parse(visit.referrers) : visit.referrers;
-      stats[type].stats = {
-        browser: {
-          chrome: period.browser.chrome + visit.br_chrome,
-          edge: period.browser.edge + visit.br_edge,
-          firefox: period.browser.firefox + visit.br_firefox,
-          ie: period.browser.ie + visit.br_ie,
-          opera: period.browser.opera + visit.br_opera,
-          other: period.browser.other + visit.br_other,
-          safari: period.browser.safari + visit.br_safari
-        },
-        os: {
-          android: period.os.android + visit.os_android,
-          ios: period.os.ios + visit.os_ios,
-          linux: period.os.linux + visit.os_linux,
-          macos: period.os.macos + visit.os_macos,
-          other: period.os.other + visit.os_other,
-          windows: period.os.windows + visit.os_windows
-        },
-        country: {
-          ...period.country,
-          ...Object.entries(countries).reduce(
-            (obj, [country, count]) => ({
-              ...obj,
-              [country]: (period.country[country] || 0) + count
-            }),
-            {}
-          )
-        },
-        referrer: {
-          ...period.referrer,
-          ...Object.entries(referrers).reduce(
-            (obj, [referrer, count]) => ({
-              ...obj,
-              [referrer]: (period.referrer[referrer] || 0) + count
-            }),
-            {}
-          )
-        }
-      };
-      stats[type].views[index] += visit.total;
-      stats[type].total += visit.total;
-    });
+  try {
+    for await (const visit of visitsStream) {
+      periods.forEach(([type, fromDate]) => {
+        const isIncluded = isAfter(utils.parseDatetime(visit.created_at), fromDate);
+        if (!isIncluded) return;
+        
+        const diffFunction = utils.getDifferenceFunction(type);
+        const diff = diffFunction(now, utils.parseDatetime(visit.created_at));
+        const index = stats[type].views.length - diff - 1;
+        const period = stats[type].stats;
+        
+        const countries = typeof visit.countries === "string" ? JSON.parse(visit.countries) : visit.countries;
+        const referrers = typeof visit.referrers === "string" ? JSON.parse(visit.referrers) : visit.referrers;
+        
+        // Mutate existing objects instead of creating new ones (memory optimization)
+        period.browser.chrome += visit.br_chrome;
+        period.browser.edge += visit.br_edge;
+        period.browser.firefox += visit.br_firefox;
+        period.browser.ie += visit.br_ie;
+        period.browser.opera += visit.br_opera;
+        period.browser.other += visit.br_other;
+        period.browser.safari += visit.br_safari;
+        
+        period.os.android += visit.os_android;
+        period.os.ios += visit.os_ios;
+        period.os.linux += visit.os_linux;
+        period.os.macos += visit.os_macos;
+        period.os.other += visit.os_other;
+        period.os.windows += visit.os_windows;
+        
+        // Merge countries
+        Object.entries(countries).forEach(([country, count]) => {
+          period.country[country] = (period.country[country] || 0) + count;
+        });
+        
+        // Merge referrers
+        Object.entries(referrers).forEach(([referrer, count]) => {
+          period.referrer[referrer] = (period.referrer[referrer] || 0) + count;
+        });
+        
+        stats[type].views[index] += visit.total;
+        stats[type].total += visit.total;
+      });
+    }
+  } catch (error) {
+    // Ensure stream is destroyed on error
+    visitsStream.destroy();
+    throw error;
+  } finally {
+    // Clean up stream if not already ended
+    if (!visitsStream.destroyed) {
+      visitsStream.destroy();
+    }
   }
 
   const response = {

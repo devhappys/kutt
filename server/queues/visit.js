@@ -20,32 +20,49 @@ function filterInOs(agent) {
   }
 }
 
-module.exports = function({ data }) {
-  const tasks = [];
-  
-  tasks.push(query.link.incrementVisit({ id:  data.link.id }));
-  
-  // the following line is for backward compatibility
-  // used to send the whole header to get the user agent
-  const userAgent = data.userAgent || data.headers?.["user-agent"];
-  const agent = useragent.parse(userAgent);
-  const [browser = "Other"] = browsersList.filter(filterInBrowser(agent));
-  const [os = "Other"] = osList.filter(filterInOs(agent));
-  const referrer =
-  data.referrer && removeWww(URL.parse(data.referrer).hostname);
-  
-  const country = data.country || geoip.lookup(data.ip)?.country;
-
-  tasks.push(
-    query.visit.add({
+module.exports = async function({ data }) {
+  try {
+    // Increment visit count first (lighter operation)
+    await query.link.incrementVisit({ id: data.link.id });
+    
+    // Parse user agent
+    const userAgent = data.userAgent || data.headers?.["user-agent"];
+    if (!userAgent) {
+      console.warn("No user agent provided for visit");
+      return;
+    }
+    
+    const agent = useragent.parse(userAgent);
+    const [browser = "Other"] = browsersList.filter(filterInBrowser(agent));
+    const [os = "Other"] = osList.filter(filterInOs(agent));
+    
+    // Parse referrer safely
+    let referrer = "Direct";
+    if (data.referrer) {
+      try {
+        const parsed = URL.parse(data.referrer);
+        if (parsed.hostname) {
+          referrer = removeWww(parsed.hostname).replace(/\./gi, "[dot]");
+        }
+      } catch (err) {
+        console.warn("Failed to parse referrer:", data.referrer);
+      }
+    }
+    
+    // Get country
+    const country = data.country || geoip.lookup(data.ip)?.country || "Unknown";
+    
+    // Add detailed visit stats
+    await query.visit.add({
       browser: browser.toLowerCase(),
-      country: country || "Unknown",
+      country: country,
       link_id: data.link.id,
       user_id: data.link.user_id,
       os: os.toLowerCase().replace(/\s/gi, ""),
-      referrer: (referrer && referrer.replace(/\./gi, "[dot]")) || "Direct"
-    })
-  );
-
-  return Promise.all(tasks);
+      referrer: referrer
+    });
+  } catch (error) {
+    console.error("Visit processing error:", error);
+    throw error;
+  }
 }
