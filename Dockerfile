@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --prod --frozen-lockfile
 
 # rebuild native modules for alpine linux
-RUN pnpm rebuild better-sqlite3 --build-from-source
+RUN npm_config_build_from_source=true pnpm rebuild better-sqlite3
 
 # ==================== Stage 3: Production Image ====================
 FROM node:24-alpine
