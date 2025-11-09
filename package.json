@@ -4,15 +4,17 @@
   "description": "Modern URL shortener.",
   "main": "./server/server.js",
   "scripts": {
-    "dev": "pnpm migrate && node --enable-source-maps --expose-gc --max-old-space-size=500 --watch-path=./server --watch-path=./custom server/server.js",
-    "dev:all": "concurrently \"pnpm dev\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
-    "start": "node --enable-source-maps --expose-gc --max-old-space-size=500 server/server.js --production",
-    "start:all": "concurrently \"pnpm start\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
+    "build": "pnpm install && cd client && pnpm install && pnpm build && cd ..",
     "client": "cd client && pnpm dev",
     "client:build": "cd client && pnpm build",
     "client:preview": "cd client && pnpm preview",
-    "migrate": "knex migrate:latest",
-    "migrate:make": "knex migrate:make",
+    "dev": "pnpm migrate && node --enable-source-maps --expose-gc --max-old-space-size=500 --watch-path=./server --watch-path=./custom server/server.js",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
+    "migrate": "knex migrate:latest --knexfile knexfile.js",
+    "migration:create": "knex migrate:make --knexfile knexfile.js -x js",
+    "queue:clean": "node server/scripts/clean-queue.js",
+    "start": "pnpm migrate && node --enable-source-maps --expose-gc --max-old-space-size=500 server/server.js --production",
+    "start:all": "concurrently \"pnpm start\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
     "docs:build": "cd docs/api && node generate && cd ../.."
   },
   "repository": {

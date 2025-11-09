@@ -16,21 +16,47 @@ if (env.REDIS_ENABLED) {
   visit = new Queue("visit", { 
     redis,
     settings: {
-      maxStalledCount: 1,
-      lockDuration: 30000,
-      lockRenewTime: 15000
+      maxStalledCount: 1, // Only retry stalled jobs once
+      lockDuration: 60000, // 60 seconds lock (increased from 30s)
+      lockRenewTime: 30000, // Renew lock every 30s
+      stalledInterval: 30000, // Check for stalled jobs every 30s
     },
     limiter: {
-      max: 100,
-      duration: 1000
+      max: 100, // Max 100 jobs per duration
+      duration: 1000, // Per 1 second
     }
   });
   
-  // Clean up old jobs
-  visit.clean(5000, "completed");
-  visit.clean(10000, "failed");
+  // Clean up old jobs immediately on startup
+  (async () => {
+    try {
+      console.log("[Visit Queue] Cleaning up old jobs...");
+      await visit.clean(0, "completed");
+      await visit.clean(0, "failed");
+      
+      // Clean all stalled jobs on startup
+      const stalled = await visit.getStalled();
+      if (stalled.length > 0) {
+        console.log(`[Visit Queue] Found ${stalled.length} stalled jobs, cleaning...`);
+        for (const job of stalled) {
+          await job.moveToFailed({ message: 'Stalled on startup' }, true);
+        }
+      }
+      
+      await visit.clean(0, "failed"); // Clean again after moving stalled to failed
+      console.log("[Visit Queue] Cleanup complete");
+    } catch (error) {
+      console.error("[Visit Queue] Cleanup error:", error);
+    }
+  })();
   
-  // Process visits with increased concurrency
+  // Regular cleanup
+  setInterval(() => {
+    visit.clean(5000, "completed").catch(err => console.error("Failed to clean completed:", err));
+    visit.clean(10000, "failed").catch(err => console.error("Failed to clean failed:", err));
+  }, 60000); // Every minute
+  
+  // Process visits with concurrency
   visit.process(12, path.resolve(__dirname, "visit.js"));
   
   // Remove completed jobs immediately to free memory
@@ -40,18 +66,18 @@ if (env.REDIS_ENABLED) {
   
   // Handle errors properly
   visit.on("error", function (error) {
-    console.error("Visit queue error:", error);
+    console.error("[Visit Queue] Error:", error);
   });
   
   visit.on("failed", function (job, error) {
-    console.error("Visit job failed:", job.id, error.message);
-    // Remove failed jobs after logging to prevent accumulation
+    console.error("[Visit Queue] Job failed:", job.id, error.message);
+    // Remove failed jobs after logging
     job.remove().catch(err => console.error("Failed to remove failed job:", err));
   });
   
-  // Monitor queue health
+  // Monitor stalled jobs (should be rare now)
   visit.on("stalled", function (job) {
-    console.warn("Visit job stalled:", job.id);
+    console.warn("[Visit Queue] Job stalled:", job.id, "- will be retried once");
   });
 } else {
   const visitProcessor = require(path.resolve(__dirname, "visit.js"));
