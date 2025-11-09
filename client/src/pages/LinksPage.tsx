@@ -16,10 +16,13 @@ export default function LinksPage() {
   const [showQRModal, setShowQRModal] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<any>(null)
   const [selectedTags, setSelectedTags] = useState<number[]>([])
+  const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState<'created' | 'visits' | 'name'>('created')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const { data: linksData, isLoading } = useQuery({
     queryKey: ['links', search],
-    queryFn: () => linksApi.getAll({ search, limit: 50 }),
+    queryFn: () => linksApi.getAll({ search, limit: 100 }),
   })
 
   const { data: tagsData } = useQuery({
@@ -35,18 +38,80 @@ export default function LinksPage() {
     },
   })
 
+  const batchDelete = useMutation({
+    mutationFn: async (linkIds: string[]) => {
+      await Promise.all(linkIds.map(id => linksApi.delete(id)))
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['links'] })
+      setSelectedLinks(new Set())
+      toast.success('Links deleted successfully')
+    },
+    onError: () => {
+      toast.error('Failed to delete some links')
+    }
+  })
+
   const links = linksData?.data?.data || []
   const tags = tagsData?.data?.data || []
 
-  const filteredLinks = selectedTags.length > 0
+  // Filter by tags
+  let filteredLinks = selectedTags.length > 0
     ? links.filter((link: any) =>
         link.tags?.some((tag: any) => selectedTags.includes(tag.id))
       )
     : links
 
+  // Sort links
+  filteredLinks = [...filteredLinks].sort((a: any, b: any) => {
+    let aVal, bVal
+    switch (sortBy) {
+      case 'visits':
+        aVal = a.visit_count || 0
+        bVal = b.visit_count || 0
+        break
+      case 'name':
+        aVal = a.address.toLowerCase()
+        bVal = b.address.toLowerCase()
+        break
+      case 'created':
+      default:
+        aVal = new Date(a.created_at).getTime()
+        bVal = new Date(b.created_at).getTime()
+    }
+    
+    const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+    return sortOrder === 'asc' ? comparison : -comparison
+  })
+
   const handleCopy = async (address: string, domain?: string) => {
     await copyToClipboard(getShortURL(address, domain))
     toast.success('Copied to clipboard!')
+  }
+
+  const handleSelectAll = () => {
+    if (selectedLinks.size === filteredLinks.length) {
+      setSelectedLinks(new Set())
+    } else {
+      setSelectedLinks(new Set(filteredLinks.map((l: any) => l.id)))
+    }
+  }
+
+  const handleSelectLink = (linkId: string) => {
+    const newSet = new Set(selectedLinks)
+    if (newSet.has(linkId)) {
+      newSet.delete(linkId)
+    } else {
+      newSet.add(linkId)
+    }
+    setSelectedLinks(newSet)
+  }
+
+  const handleBatchDelete = () => {
+    if (selectedLinks.size === 0) return
+    if (confirm(`Delete ${selectedLinks.size} link(s)?`)) {
+      batchDelete.mutate(Array.from(selectedLinks))
+    }
   }
 
   return (
@@ -64,16 +129,38 @@ export default function LinksPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-wrap gap-4 animate-slideInUp">
-        <div className="relative flex-1 min-w-[300px]">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search links..."
-            className="input pl-10"
-          />
+      <div className="mb-6 space-y-4 animate-slideInUp">
+        <div className="flex flex-wrap gap-4">
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search links..."
+              className="input pl-10"
+            />
+          </div>
+          
+          {/* Sort Controls */}
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="input pr-8"
+            >
+              <option value="created">Created Date</option>
+              <option value="visits">Visits</option>
+              <option value="name">Name</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="btn-secondary p-2"
+              title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+            >
+              {sortOrder === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
         </div>
         
         {/* Tag Filters */}
@@ -103,6 +190,33 @@ export default function LinksPage() {
             </button>
           ))}
         </div>
+
+        {/* Batch Actions Toolbar */}
+        {selectedLinks.size > 0 && (
+          <div className="card bg-primary-50 border-primary-200 flex items-center justify-between p-4">
+            <div className="flex items-center gap-4">
+              <span className="font-medium text-primary-900">
+                {selectedLinks.size} link{selectedLinks.size > 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={() => setSelectedLinks(new Set())}
+                className="text-sm text-primary-600 hover:text-primary-700"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBatchDelete}
+                disabled={batchDelete.isPending}
+                className="btn-danger flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                {batchDelete.isPending ? 'Deleting...' : 'Delete Selected'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Links Grid */}
@@ -115,11 +229,28 @@ export default function LinksPage() {
           <p className="text-gray-500">No links found</p>
         </div>
       ) : (
-        <div className="grid gap-4 animate-slideInUp">
+        <div className="space-y-4 animate-slideInUp">
+          {/* Select All */}
+          {filteredLinks.length > 0 && (
+            <div className="flex items-center gap-3 px-2">
+              <input
+                type="checkbox"
+                checked={selectedLinks.size === filteredLinks.length && filteredLinks.length > 0}
+                onChange={handleSelectAll}
+                className="h-4 w-4 text-primary-600 rounded"
+              />
+              <label className="text-sm text-gray-600">
+                Select all ({filteredLinks.length})
+              </label>
+            </div>
+          )}
+          
           {filteredLinks.map((link: any) => (
             <LinkCard
               key={link.id}
               link={link}
+              selected={selectedLinks.has(link.id)}
+              onSelect={handleSelectLink}
               onCopy={handleCopy}
               onEdit={setEditingLink}
               onDelete={(id: string) => deleteLink.mutate(id)}
@@ -162,11 +293,22 @@ export default function LinksPage() {
   )
 }
 
-function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }: any) {
+function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit }: any) {
   return (
-    <div className="card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn overflow-hidden">
+    <div className={`card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn overflow-hidden ${
+      selected ? 'ring-2 ring-primary-500 bg-primary-50' : ''
+    }`}>
       <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+        {/* Checkbox */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onSelect(link.id)}
+            className="mt-1 h-4 w-4 text-primary-600 rounded flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="flex-1 min-w-0">
           <div className="flex items-center flex-wrap gap-2 mb-2">
             <h3 className="font-semibold text-lg break-all">/{link.address}</h3>
             {link.password && (
@@ -210,6 +352,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }: any) {
               ))}
             </div>
           )}
+          </div>
         </div>
         
         <div className="flex items-center flex-wrap gap-2 sm:ml-4 flex-shrink-0">
@@ -431,13 +574,17 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
   )
 }
 
-function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
+function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
   const [formData, setFormData] = useState({
     address: link.address || '',
     target: link.target || '',
     description: link.description || '',
     expire_in: link.expire_in || '',
+    password: '',
+    removePassword: false,
+    tag_ids: link.tags?.map((t: any) => t.id) || [] as number[],
   })
+  const [showPasswordField, setShowPasswordField] = useState(false)
 
   const updateLink = useMutation({
     mutationFn: (data: any) => linksApi.update(link.id, data),
@@ -450,21 +597,67 @@ function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
     },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const updateTags = useMutation({
+    mutationFn: async (tag_ids: number[]) => {
+      const currentIds = link.tags?.map((t: any) => t.id) || []
+      const toAdd = tag_ids.filter(id => !currentIds.includes(id))
+      const toRemove = currentIds.filter((id: number) => !tag_ids.includes(id))
+      
+      if (toAdd.length > 0) {
+        await tagsApi.addToLink(link.id, toAdd)
+      }
+      if (toRemove.length > 0) {
+        await tagsApi.removeFromLink(link.id, toRemove)
+      }
+    },
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const updateData: any = {}
     
-    if (formData.address !== link.address) updateData.address = formData.address
-    if (formData.target !== link.target) updateData.target = formData.target
-    if (formData.description !== link.description) updateData.description = formData.description
-    if (formData.expire_in !== link.expire_in) updateData.expire_in = formData.expire_in
-    
-    if (Object.keys(updateData).length === 0) {
-      toast.error('No changes to update')
-      return
+    try {
+      // Update basic fields
+      const updateData: any = {}
+      
+      if (formData.address !== link.address) updateData.address = formData.address
+      if (formData.target !== link.target) updateData.target = formData.target
+      if (formData.description !== link.description) updateData.description = formData.description
+      if (formData.expire_in !== link.expire_in) updateData.expire_in = formData.expire_in
+      
+      // Handle password
+      if (formData.removePassword) {
+        updateData.password = null
+      } else if (formData.password) {
+        updateData.password = formData.password
+      }
+      
+      const hasBasicChanges = Object.keys(updateData).length > 0
+      const hasTagChanges = JSON.stringify(formData.tag_ids.sort()) !== 
+                           JSON.stringify((link.tags?.map((t: any) => t.id) || []).sort())
+      
+      if (!hasBasicChanges && !hasTagChanges) {
+        toast.error('No changes to update')
+        return
+      }
+      
+      // Update link fields
+      if (hasBasicChanges) {
+        await updateLink.mutateAsync(updateData)
+      }
+      
+      // Update tags
+      if (hasTagChanges) {
+        await updateTags.mutateAsync(formData.tag_ids)
+      }
+      
+      if (!hasBasicChanges && hasTagChanges) {
+        toast.success('Tags updated!')
+      }
+      
+      onSuccess()
+    } catch (error) {
+      // Error already handled by mutation
     }
-    
-    updateLink.mutate(updateData)
   }
 
   return (
@@ -523,13 +716,110 @@ function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
               onChange={(e) => setFormData({ ...formData, expire_in: e.target.value })}
               className="input"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to remove expiration
+            </p>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> Password protection cannot be modified after creation.
-              {link.password && " This link is password protected."}
-            </p>
+          {/* Password Management */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="label mb-0">
+                Password Protection
+                {link.password && (
+                  <span className="ml-2 badge bg-yellow-100 text-yellow-800 text-xs">
+                    <Lock className="h-3 w-3 inline mr-1" />
+                    Currently Protected
+                  </span>
+                )}
+              </label>
+              {!showPasswordField && (
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordField(true)}
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  {link.password ? 'Change Password' : 'Add Password'}
+                </button>
+              )}
+            </div>
+
+            {showPasswordField && (
+              <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value, removePassword: false })}
+                  className="input"
+                  placeholder={link.password ? "Enter new password" : "Enter password"}
+                />
+                
+                {link.password && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="removePassword"
+                      checked={formData.removePassword}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        removePassword: e.target.checked,
+                        password: e.target.checked ? '' : formData.password
+                      })}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <label htmlFor="removePassword" className="text-sm text-gray-700">
+                      Remove password protection
+                    </label>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordField(false)
+                    setFormData({ ...formData, password: '', removePassword: false })
+                  }}
+                  className="text-sm text-gray-600 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Tags Management */}
+          <div>
+            <label className="label">Tags (optional)</label>
+            <div className="flex flex-wrap gap-2">
+              {tags && tags.length > 0 ? (
+                tags.map((tag: any) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        tag_ids: prev.tag_ids.includes(tag.id)
+                          ? prev.tag_ids.filter((id: number) => id !== tag.id)
+                          : [...prev.tag_ids, tag.id],
+                      }))
+                    }
+                    className={`badge cursor-pointer transition-all ${
+                      formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2' : 'opacity-60 hover:opacity-100'
+                    }`}
+                    style={{
+                      backgroundColor: tag.color + '20',
+                      color: tag.color,
+                      ...(formData.tag_ids.includes(tag.id) && { ringColor: tag.color }),
+                    }}
+                  >
+                    {tag.name}
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No tags available. Create tags first.</p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3">
@@ -542,10 +832,10 @@ function EditLinkModal({ link, tags: _tags, onClose, onSuccess }: any) {
             </button>
             <button
               type="submit"
-              disabled={updateLink.isPending}
+              disabled={updateLink.isPending || updateTags.isPending}
               className="btn-primary flex-1"
             >
-              {updateLink.isPending ? 'Updating...' : 'Update Link'}
+              {updateLink.isPending || updateTags.isPending ? 'Updating...' : 'Update Link'}
             </button>
           </div>
         </form>
