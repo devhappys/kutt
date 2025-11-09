@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm migrate && node --enable-source-maps --watch-path=./server --watch-path=./custom server/server.js",
     "dev:all": "concurrently \"pnpm dev\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
-    "start": "pnpm migrate && node --enable-source-maps server/server.js --production",
+    "start": "node --enable-source-maps server/server.js --production",
     "start:all": "concurrently \"pnpm start\" \"pnpm client\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
     "client": "cd client && pnpm dev",
     "client:build": "cd client && pnpm build",
