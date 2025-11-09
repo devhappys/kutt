@@ -533,6 +533,49 @@ async function bannedHost(domain) {
   }
 };
 
+const twofaVerify = [
+  body("token", "Token is not valid.")
+    .exists({ checkFalsy: true, checkNull: true })
+    .isString()
+    .trim()
+    .isLength({ min: 6, max: 6 })
+    .withMessage("Token must be 6 digits.")
+];
+
+const twofaDisable = [
+  body("password", "Password is not valid.")
+    .exists({ checkFalsy: true, checkNull: true })
+    .isLength({ min: 8, max: 64 })
+    .withMessage("Password length must be between 8 and 64.")
+];
+
+const twofaVerifyToken = [
+  body("email", "Email is not valid.")
+    .exists({ checkFalsy: true, checkNull: true })
+    .trim()
+    .isLength({ min: 1, max: 255 })
+    .withMessage("Email length must be max 255.")
+    .isEmail(),
+  body("token", "Token is not valid.")
+    .exists({ checkFalsy: true, checkNull: true })
+    .isString()
+    .trim()
+    .isLength({ min: 6, max: 8 })
+    .withMessage("Token must be 6 or 8 characters."),
+  body("isBackupCode")
+    .optional({ nullable: true })
+    .isBoolean()
+];
+
+const twofaCheckRequired = [
+  body("email", "Email is not valid.")
+    .exists({ checkFalsy: true, checkNull: true })
+    .trim()
+    .isLength({ min: 1, max: 255 })
+    .withMessage("Email length must be max 255.")
+    .isEmail()
+];
+
 module.exports = {
   addDomain,
   addDomainAdmin,
@@ -561,4 +604,8 @@ module.exports = {
   resetPassword,
   signup,
   signupEmailTaken,
+  twofaVerify,
+  twofaDisable,
+  twofaVerifyToken,
+  twofaCheckRequired,
 }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi, domainsApi, usersApi } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
-import { User, Key, Copy, Eye, EyeOff, Save, Mail, Shield, Globe, Lock, Trash2, AlertTriangle, Plus } from 'lucide-react'
+import { User, Key, Copy, Eye, EyeOff, Save, Mail, Shield, Globe, Lock, Trash2, AlertTriangle, Plus, CheckCircle, X, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { copyToClipboard } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
@@ -404,24 +404,125 @@ function SecuritySection() {
         </form>
       </div>
 
-      {/* Two-Factor Authentication (Future) */}
-      <div className="card mt-6 opacity-60">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Add an extra layer of security to your account
-            </p>
-          </div>
-          <button className="btn-secondary" disabled>
-            Coming Soon
-          </button>
-        </div>
-      </div>
+      {/* Two-Factor Authentication */}
+      <TwoFactorAuthSection />
 
       {/* Delete Account */}
       <DeleteAccountSection />
     </div>
+  )
+}
+
+function TwoFactorAuthSection() {
+  const [showSetupModal, setShowSetupModal] = useState(false)
+  const [showDisableModal, setShowDisableModal] = useState(false)
+  const [showBackupCodesModal, setShowBackupCodesModal] = useState(false)
+  
+  const { data: statusData, refetch: refetchStatus } = useQuery({
+    queryKey: ['twofa-status'],
+    queryFn: () => authApi.twofa.getStatus(),
+  })
+  
+  const enabled = statusData?.data?.enabled || false
+  const backupCodesCount = statusData?.data?.backupCodesCount || 0
+  
+  return (
+    <>
+      <div className="card mt-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4 flex-1">
+            <div className={`rounded-xl p-3 ${enabled ? 'bg-green-100' : 'bg-gray-100'}`}>
+              <Shield className={`h-6 w-6 ${enabled ? 'text-green-600' : 'text-gray-600'}`} />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Add an extra layer of security to your account with TOTP authentication
+              </p>
+              {enabled && (
+                <div className="mt-3 flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-700">Active</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {backupCodesCount} backup codes remaining
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {enabled ? (
+              <>
+                <button
+                  onClick={() => setShowBackupCodesModal(true)}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Key className="h-4 w-4" />
+                  Backup Codes
+                </button>
+                <button
+                  onClick={() => setShowDisableModal(true)}
+                  className="btn-danger"
+                >
+                  Disable
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowSetupModal(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Enable 2FA
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {!enabled && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 mb-1">Enhance Your Security</p>
+                <p className="text-sm text-blue-700">
+                  Two-factor authentication adds an extra layer of protection by requiring a verification code from your authenticator app when signing in.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showSetupModal && (
+        <TwoFactorSetupModal
+          onClose={() => setShowSetupModal(false)}
+          onSuccess={() => {
+            setShowSetupModal(false)
+            refetchStatus()
+          }}
+        />
+      )}
+
+      {showDisableModal && (
+        <TwoFactorDisableModal
+          onClose={() => setShowDisableModal(false)}
+          onSuccess={() => {
+            setShowDisableModal(false)
+            refetchStatus()
+          }}
+        />
+      )}
+
+      {showBackupCodesModal && (
+        <BackupCodesModal
+          onClose={() => setShowBackupCodesModal(false)}
+          onRefresh={() => refetchStatus()}
+        />
+      )}
+    </>
   )
 }
 
@@ -732,6 +833,418 @@ function AddDomainModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// ==================== 2FA Setup Modal ====================
+function TwoFactorSetupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient()
+  const [step, setStep] = useState<'scan' | 'verify' | 'codes'>('scan')
+  const [qrCode, setQrCode] = useState('')
+  const [secret, setSecret] = useState('')
+  const [token, setToken] = useState('')
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+
+  const setup = useMutation({
+    mutationFn: () => authApi.twofa.setup(),
+    onSuccess: (response) => {
+      setQrCode(response.data.qrCode)
+      setSecret(response.data.secret)
+    },
+    onError: () => {
+      toast.error('Failed to setup 2FA')
+    },
+  })
+
+  const verify = useMutation({
+    mutationFn: (data: { token: string }) => authApi.twofa.verify(data),
+    onSuccess: (response) => {
+      setBackupCodes(response.data.backupCodes || [])
+      setStep('codes')
+      queryClient.invalidateQueries({ queryKey: ['twofa-status'] })
+    },
+    onError: () => {
+      toast.error('Invalid verification code')
+    },
+  })
+
+  const handleSetup = () => {
+    setup.mutate()
+  }
+
+  const handleVerify = () => {
+    if (token.length === 6) {
+      verify.mutate({ token })
+    }
+  }
+
+  const handleFinish = () => {
+    toast.success('Two-factor authentication enabled!')
+    onSuccess()
+  }
+
+  const copyAllCodes = () => {
+    copyToClipboard(backupCodes.join('\n'))
+    toast.success('Backup codes copied to clipboard')
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {step === 'scan' && 'Setup Two-Factor Authentication'}
+            {step === 'verify' && 'Verify Setup'}
+            {step === 'codes' && 'Save Backup Codes'}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {step === 'scan' && (
+          <div className="space-y-5">
+            {!qrCode ? (
+              <>
+                <p className="text-gray-600">
+                  Enable two-factor authentication to add an extra layer of security to your account.
+                </p>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium text-blue-900 mb-2">You'll need:</p>
+                  <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                    <li>An authenticator app (Google Authenticator, Authy, etc.)</li>
+                    <li>Your phone or another device</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={handleSetup}
+                  disabled={setup.isPending}
+                  className="btn-primary w-full"
+                >
+                  {setup.isPending ? 'Setting up...' : 'Continue'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Scan this QR code with your authenticator app:
+                  </p>
+                  <div className="flex justify-center p-6 bg-white rounded-lg border-2 border-gray-200">
+                    <img src={qrCode} alt="QR Code" className="w-64 h-64" />
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">Or enter this code manually:</p>
+                    <code className="text-sm font-mono bg-white px-3 py-2 rounded border border-gray-300 block break-all">
+                      {secret}
+                    </code>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setStep('verify')}
+                  className="btn-primary w-full"
+                >
+                  Continue to Verification
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {step === 'verify' && (
+          <div className="space-y-5">
+            <p className="text-gray-600">
+              Enter the 6-digit code from your authenticator app to verify the setup:
+            </p>
+            <div>
+              <label className="label">Verification Code</label>
+              <input
+                type="text"
+                value={token}
+                onChange={(e) => setToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="input text-center text-2xl tracking-widest font-mono"
+                placeholder="000000"
+                maxLength={6}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep('scan')}
+                className="btn-secondary flex-1"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleVerify}
+                disabled={verify.isPending || token.length !== 6}
+                className="btn-primary flex-1"
+              >
+                {verify.isPending ? 'Verifying...' : 'Verify'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'codes' && (
+          <div className="space-y-5">
+            <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-900 mb-1">
+                    Save these backup codes!
+                  </p>
+                  <p className="text-sm text-yellow-800">
+                    Store them in a safe place. You can use them to access your account if you lose access to your authenticator app.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                {backupCodes.map((code, index) => (
+                  <div key={index} className="font-mono text-sm bg-white px-3 py-2 rounded border border-gray-300">
+                    {code}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={copyAllCodes}
+                className="btn-secondary flex items-center gap-2 flex-1"
+              >
+                <Copy className="h-4 w-4" />
+                Copy All
+              </button>
+              <button
+                onClick={handleFinish}
+                className="btn-primary flex-1"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ==================== 2FA Disable Modal ====================
+function TwoFactorDisableModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient()
+  const [password, setPassword] = useState('')
+
+  const disable = useMutation({
+    mutationFn: (data: { password: string }) => authApi.twofa.disable(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['twofa-status'] })
+      toast.success('Two-factor authentication disabled')
+      onSuccess()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to disable 2FA')
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    disable.mutate({ password })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Disable Two-Factor Authentication</h2>
+          <p className="text-gray-600">
+            This will reduce the security of your account. Enter your password to confirm.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="label">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input"
+              placeholder="Enter your password"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={disable.isPending}
+              className="btn-danger flex-1"
+            >
+              {disable.isPending ? 'Disabling...' : 'Disable 2FA'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ==================== Backup Codes Modal ====================
+function BackupCodesModal({ onClose, onRefresh }: { onClose: () => void; onRefresh: () => void }) {
+  const queryClient = useQueryClient()
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+  const [showCodes, setShowCodes] = useState(false)
+
+  const regenerate = useMutation({
+    mutationFn: () => authApi.twofa.regenerateBackupCodes(),
+    onSuccess: (response) => {
+      setBackupCodes(response.data.backupCodes || [])
+      setShowCodes(true)
+      queryClient.invalidateQueries({ queryKey: ['twofa-status'] })
+      onRefresh()
+      toast.success('Backup codes regenerated')
+    },
+    onError: () => {
+      toast.error('Failed to regenerate backup codes')
+    },
+  })
+
+  const handleRegenerate = () => {
+    if (confirm('Are you sure? This will invalidate all your existing backup codes.')) {
+      regenerate.mutate()
+    }
+  }
+
+  const copyAllCodes = () => {
+    copyToClipboard(backupCodes.join('\n'))
+    toast.success('Backup codes copied to clipboard')
+  }
+
+  const downloadCodes = () => {
+    const blob = new Blob([backupCodes.join('\n')], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'kutt-backup-codes.txt'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success('Backup codes downloaded')
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Backup Codes</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {!showCodes ? (
+          <div className="space-y-5">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-3">
+                <Key className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 mb-1">About Backup Codes</p>
+                  <p className="text-sm text-blue-700">
+                    Backup codes let you access your account if you lose access to your authenticator app. Each code can only be used once.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-900 mb-1">Warning</p>
+                  <p className="text-sm text-yellow-700">
+                    Regenerating backup codes will invalidate all your existing codes. Make sure to save the new codes in a safe place.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleRegenerate}
+              disabled={regenerate.isPending}
+              className="btn-primary w-full"
+            >
+              {regenerate.isPending ? 'Generating...' : 'Regenerate Backup Codes'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-900 mb-1">
+                    Save these codes now!
+                  </p>
+                  <p className="text-sm text-yellow-800">
+                    Store them securely. Each code can only be used once.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                {backupCodes.map((code, index) => (
+                  <div key={index} className="font-mono text-sm bg-white px-3 py-2 rounded border border-gray-300">
+                    {code}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={copyAllCodes}
+                className="btn-secondary flex items-center gap-2 flex-1"
+              >
+                <Copy className="h-4 w-4" />
+                Copy
+              </button>
+              <button
+                onClick={downloadCodes}
+                className="btn-secondary flex items-center gap-2 flex-1"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+              <button
+                onClick={onClose}
+                className="btn-primary flex-1"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

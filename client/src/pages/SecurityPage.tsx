@@ -5,7 +5,7 @@ import { securityApi } from '@/lib/api'
 import { 
   Shield, Plus, Trash2, X, Globe, Zap, ArrowRight, 
   ArrowLeft, AlertTriangle, CheckCircle,
-  Smartphone, Clock, Edit
+  Smartphone, Clock
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 

@@ -267,6 +267,25 @@ export const authApi = {
   
   createAdmin: (data: { email: string; password: string }) =>
     api.post('/auth/create-admin', data),
+  
+  // Two-Factor Authentication
+  twofa: {
+    setup: () => api.post('/auth/2fa/setup'),
+    
+    verify: (data: { token: string }) => api.post('/auth/2fa/verify', data),
+    
+    disable: (data: { password: string }) => api.post('/auth/2fa/disable', data),
+    
+    verifyToken: (data: { email: string; token: string; isBackupCode?: boolean }) =>
+      api.post('/auth/2fa/verify-token', data),
+    
+    checkRequired: (data: { email: string }) =>
+      api.post('/auth/2fa/check-required', data),
+    
+    regenerateBackupCodes: () => api.post('/auth/2fa/regenerate-backup-codes'),
+    
+    getStatus: () => api.get('/auth/2fa/status'),
+  },
 }
 
 // ==================== Users API ====================
