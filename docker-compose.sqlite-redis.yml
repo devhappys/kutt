@@ -4,7 +4,7 @@ services:
       context: .
     volumes:
       - db_data_sqlite:/var/lib/hapxs-surl
-      - custom:/hapxs-surl/custom
+      - custom:/app/custom
     environment:
       DB_FILENAME: "/var/lib/hapxs-surl/data.sqlite"
       REDIS_ENABLED: true
@@ -12,6 +12,7 @@ services:
       REDIS_PORT: 6379
     ports:
       - 3000:3000
+      - 3001:3001
     depends_on:
       redis:
         condition: service_started
