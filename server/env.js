@@ -27,6 +27,7 @@ if (process.argv.includes("--production")) {
 }
 
 const spec = {
+  NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
   PORT: num({ default: 3000 }),
   SITE_NAME: str({ example: "hapxs-surl", default: "hapxs-surl" }),
   DEFAULT_DOMAIN: str({ example: "hapxs-surl.it", default: "localhost:3000" }),
@@ -65,6 +66,7 @@ const spec = {
   REPORT_EMAIL: str({ default: "" }),
   CONTACT_EMAIL: str({ default: "" }),
   NODE_APP_INSTANCE: num({ default: 0 }),
+  DEBUG_SQL: bool({ default: false }),
 };
 
 for (const key in spec) {
