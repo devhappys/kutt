@@ -12,39 +12,45 @@ import toast from 'react-hot-toast'
 export default function StatsPage() {
   const { linkId } = useParams<{ linkId: string }>()
 
-  const { data: linkData } = useQuery({
-    queryKey: ['link', linkId],
-    queryFn: () => linksApi.getAll({ search: linkId }),
+  // Get link stats (includes link info + historical stats)
+  const { data: linkStatsData, isLoading: isLoadingLink, error: linkError } = useQuery({
+    queryKey: ['link', 'stats', linkId],
+    queryFn: () => linksApi.getStats(linkId!),
     enabled: !!linkId,
   })
 
-  const { data: realtimeData } = useQuery({
+  // Get real-time stats
+  const { data: realtimeData, error: realtimeError } = useQuery({
     queryKey: ['stats', 'realtime', linkId],
     queryFn: () => statsApi.getRealtime(linkId!),
     refetchInterval: 30000,
     enabled: !!linkId,
   })
 
-  // Heatmap data query (currently unused but available for future features)
-  // const { data: heatmapData } = useQuery({
-  //   queryKey: ['stats', 'heatmap', linkId, dateRange],
-  //   queryFn: () => statsApi.getHeatmap(linkId!, dateRange),
-  // })
-
+  // Get UTM stats
   const { data: utmData } = useQuery({
     queryKey: ['stats', 'utm', linkId],
     queryFn: () => statsApi.getUTMStats(linkId!),
     enabled: !!linkId,
   })
 
+  // Get device stats
   const { data: deviceData } = useQuery({
     queryKey: ['stats', 'devices', linkId],
     queryFn: () => statsApi.getDeviceStats(linkId!),
     enabled: !!linkId,
   })
 
-  const link = linkData?.data?.data?.[0]
+  const link = linkStatsData?.data
   const realtime = realtimeData?.data
+
+  // Debug logging
+  if (linkError) {
+    console.error('Link stats error:', linkError)
+  }
+  if (realtimeError) {
+    console.error('Realtime stats error:', realtimeError)
+  }
 
   const handleExport = async (format: 'csv' | 'json') => {
     if (!linkId) {
@@ -66,6 +72,37 @@ export default function StatsPage() {
         <div className="card max-w-md mx-auto text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Link ID Missing</h2>
           <p className="text-gray-600 mb-4">No link ID was provided in the URL.</p>
+          <Link to="/app/links" className="btn-primary">
+            Back to Links
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state
+  if (isLoadingLink) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="card max-w-md mx-auto text-center py-12">
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          </div>
+          <p className="text-gray-600">Loading statistics...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (linkError) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="card max-w-md mx-auto text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Link</h2>
+          <p className="text-gray-600 mb-4">
+            {(linkError as any)?.response?.data?.message || 'Failed to load link statistics'}
+          </p>
           <Link to="/app/links" className="btn-primary">
             Back to Links
           </Link>
