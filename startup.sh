@@ -76,4 +76,4 @@ fi
 echo "Migrations completed successfully"
 echo ""
 echo "Starting server..."
-exec node --enable-source-maps server/server.js --production
+exec pnpm start:all
