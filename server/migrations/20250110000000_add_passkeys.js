@@ -1,4 +1,4 @@
-exports.up = async function(knex) {
+exports.up = async function (knex) {
   // Create passkeys table for WebAuthn credentials
   const hasTable = await knex.schema.hasTable("passkeys");
   if (!hasTable) {
@@ -12,16 +12,16 @@ exports.up = async function(knex) {
       table.string("transports", 255); // Comma-separated list of transports
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("last_used").nullable();
-      
+
       // Foreign key
       table.foreign("user_id").references("users.id").onDelete("CASCADE");
-      
+
       // Index for faster lookups
       table.index("user_id");
       table.index("credential_id"); // Removed BTREE specification for MySQL compatibility
     });
   }
-  
+
   // Add passkey_enabled flag to users table
   const hasUsersTable = await knex.schema.hasTable("users");
   if (hasUsersTable) {
@@ -31,18 +31,18 @@ exports.up = async function(knex) {
         table.boolean("passkey_enabled").notNullable().defaultTo(false);
       });
     }
-    
+
     // Add passkey_2fa_required flag to control if passkey is required as 2FA
     const hasPasskey2FARequired = await knex.schema.hasColumn("users", "passkey_2fa_required");
     if (!hasPasskey2FARequired) {
       await knex.schema.table("users", table => {
-        table.boolean("passkey_2fa_required").notNullable().defaultTo(true);
+        table.boolean("passkey_2fa_required").notNullable().defaultTo(false);
       });
     }
   }
 };
 
-exports.down = async function(knex) {
+exports.down = async function (knex) {
   // Remove passkey fields from users table
   const hasUsersTable = await knex.schema.hasTable("users");
   if (hasUsersTable) {
@@ -52,7 +52,7 @@ exports.down = async function(knex) {
         table.dropColumn("passkey_2fa_required");
       });
     }
-    
+
     const hasPasskeyEnabled = await knex.schema.hasColumn("users", "passkey_enabled");
     if (hasPasskeyEnabled) {
       await knex.schema.table("users", table => {
@@ -60,7 +60,7 @@ exports.down = async function(knex) {
       });
     }
   }
-  
+
   // Drop passkeys table
   const hasTable = await knex.schema.hasTable("passkeys");
   if (hasTable) {
