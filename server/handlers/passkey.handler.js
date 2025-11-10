@@ -47,8 +47,8 @@ async function registerInit(req, res) {
         transports: passkey.transports ? passkey.transports.split(',') : undefined,
       })),
       authenticatorSelection: {
-        // Try to use platform authenticators (like Windows Hello, Face ID, Touch ID)
-        authenticatorAttachment: 'platform',
+        // Allow both platform and cross-platform authenticators
+        // authenticatorAttachment: 'platform', // Removed to support USB keys, NFC, etc.
         residentKey: 'preferred',
         userVerification: 'preferred',
       },
@@ -110,13 +110,7 @@ async function registerVerify(req, res) {
       throw new CustomError('Passkey verification failed.', 400);
     }
 
-    // Debug: log the structure of registrationInfo
-    console.log('registrationInfo structure:', JSON.stringify(verification.registrationInfo, null, 2));
-
     const { credential: credentialInfo } = verification.registrationInfo;
-    
-    // Debug: log credentialInfo
-    console.log('credentialInfo:', credentialInfo);
     
     // SimpleWebAuthn v13 structure
     const credentialID = credentialInfo?.id || credentialInfo?.credentialID;
@@ -233,9 +227,8 @@ async function authenticateVerify(req, res) {
 
     const { challenge, userId } = challengeData;
 
-    // Find the passkey
-    const credentialID = Buffer.from(credential.id, 'base64url').toString('base64url');
-    const passkey = await query.passkey.findByCredentialId(credentialID);
+    // Find the passkey - credential.id is already base64url encoded
+    const passkey = await query.passkey.findByCredentialId(credential.id);
 
     if (!passkey || passkey.user_id !== userId) {
       throw new CustomError('Passkey not found.', 404);

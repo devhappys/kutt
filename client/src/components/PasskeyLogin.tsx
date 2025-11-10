@@ -34,7 +34,13 @@ export default function PasskeyLogin({ email, onSuccess }: PasskeyLoginProps) {
         credential,
       })
 
-      const { token, apikey } = verifyRes.data
+      // Handle both direct data and nested data structure
+      const responseData = verifyRes.data?.data || verifyRes.data
+      const { token, apikey } = responseData
+
+      if (!token || !apikey) {
+        throw new Error('Invalid authentication response')
+      }
 
       toast.success('Signed in successfully with passkey!')
       onSuccess(token, apikey)

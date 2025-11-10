@@ -54,19 +54,20 @@ export default function LoginPage() {
 
   const isPending = loginMutation.isPending || signupMutation.isPending
 
-  const handlePasskeySuccess = (token: string, apikey: string) => {
-    // Store token in localStorage for API authentication
-    localStorage.setItem('token', token)
+  const handlePasskeySuccess = (_token: string, apikey: string) => {
+    // First set the API key for subsequent requests
+    localStorage.setItem('apiKey', apikey)
     
-    // Fetch user data with the token
+    // Fetch user data with the API key
     authApi.getUser()
       .then((response) => {
-        const user = response.data
-        setAuth(user, apikey)
+        const userData = response.data?.data || response.data
+        setAuth(userData, apikey)
         toast.success('Signed in with passkey!')
         navigate('/app')
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Failed to fetch user data:', error)
         toast.error('Failed to fetch user data')
       })
   }

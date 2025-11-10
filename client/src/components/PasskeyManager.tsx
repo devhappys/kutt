@@ -27,7 +27,7 @@ export default function PasskeyManager() {
     queryKey: ['passkeys'],
     queryFn: async () => {
       const res = await authApi.passkey.list()
-      return res.data
+      return res.data?.data || res.data
     },
   })
 
@@ -36,7 +36,7 @@ export default function PasskeyManager() {
     queryKey: ['passkey-status'],
     queryFn: async () => {
       const res = await authApi.passkey.getStatus()
-      return res.data
+      return res.data?.data || res.data
     },
   })
 
@@ -312,7 +312,7 @@ function AddPasskeyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     try {
       // Step 1: Get registration options from server
       const initRes = await authApi.passkey.registerInit()
-      const options = initRes.data
+      const options = initRes.data?.data || initRes.data
 
       // Step 2: Prompt user to create credential
       const credential = await startRegistration(options)
