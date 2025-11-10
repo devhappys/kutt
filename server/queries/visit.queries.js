@@ -3,6 +3,7 @@ const { isAfter, subDays, subHours, set, format } = require("date-fns");
 const utils = require("../utils");
 const knex = require("../knex");
 const helpers = require("../handlers/helpers.handler");
+const redis = require("../redis");
 const env = require("../env");
 const { now: tzNow, formatDateForDB } = require("../utils/timezone");
 

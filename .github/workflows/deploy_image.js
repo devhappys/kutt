@@ -476,44 +476,31 @@ async function recreateContainer(ssh, oldContainerName, newImageUrl) {
         }
 
         // 继承网络配置
+        // 检查环境变量 NETWORK_MODE，如果未设置则默认使用 1panel-network
+        const forceNetworkMode = process.env.NETWORK_MODE;
         const networks = networkSettings.Networks || {};
         const networkNames = Object.keys(networks);
         
-        if (hostConfig.NetworkMode && hostConfig.NetworkMode !== 'default' && hostConfig.NetworkMode !== 'bridge') {
-            // 使用 NetworkMode（如 host、none 或自定义网络）
-            createCommand += `--network ${hostConfig.NetworkMode} `;
-            
-            // 继承网络别名
-            const networkConfig = networks[hostConfig.NetworkMode];
-            if (networkConfig && networkConfig.Aliases && networkConfig.Aliases.length > 0) {
-                for (const alias of networkConfig.Aliases) {
-                    createCommand += `--network-alias ${alias} `;
-                }
-            }
-        } else if (networkNames.length > 0) {
-            // 使用 NetworkSettings 中的网络配置
+        if (forceNetworkMode) {
+            // 使用环境变量指定的网络模式
+            logInfo(`使用环境变量指定的网络: ${forceNetworkMode}`);
+            createCommand += `--network ${forceNetworkMode} `;
+        } else {
+            // 未配置环境变量，强制使用 1panel-network
+            logInfo(`未配置 NETWORK_MODE 环境变量，强制使用: 1panel-network`);
+            createCommand += `--network 1panel-network `;
+        }
+        
+        // 继承网络别名（如果原容器有配置）
+        if (networkNames.length > 0) {
             for (const networkName of networkNames) {
                 const networkConfig = networks[networkName];
-                createCommand += `--network ${networkName} `;
-                
-                // 继承网络别名
-                if (networkConfig.Aliases && networkConfig.Aliases.length > 0) {
+                if (networkConfig && networkConfig.Aliases && networkConfig.Aliases.length > 0) {
                     for (const alias of networkConfig.Aliases) {
                         createCommand += `--network-alias ${alias} `;
                     }
                 }
-                
-                // 继承 IPv4 地址配置（如果有静态IP）
-                if (networkConfig.IPAddress && networkConfig.IPAddress !== '') {
-                    createCommand += `--ip ${networkConfig.IPAddress} `;
-                }
-                
-                // 继承 IPv6 地址配置
-                if (networkConfig.GlobalIPv6Address && networkConfig.GlobalIPv6Address !== '') {
-                    createCommand += `--ip6 ${networkConfig.GlobalIPv6Address} `;
-                }
-                
-                // 只处理第一个网络，多网络需要容器创建后再连接
+                // 只处理第一个网络的别名
                 break;
             }
         }
@@ -678,23 +665,20 @@ async function recreateContainer(ssh, oldContainerName, newImageUrl) {
         }
 
         // 继承启动参数（Args）
+        // 注意：不再硬编码启动命令，使用镜像默认的 CMD（sh startup.sh）
+        // 这样可以确保 startup.sh 中的迁移逻辑正确执行
         if (config.Args && config.Args.length > 0) {
-            // 将 Args 数组拼接成启动命令
             const argsCommand = config.Args.join(' ');
-            logInfo(`继承启动参数: ${argsCommand}`);
+            logInfo(`原容器启动参数: ${argsCommand}`);
         }
 
         // 等待5秒
         await new Promise(resolve => setTimeout(resolve, 5000));
         createCommand += newImageUrl;
         
-        // 添加启动参数作为容器命令
-        if (config.Args && config.Args.length > 0) {
-            createCommand += ` ${config.Args.join(' ')}`;
-        }
-        
-        // 添加 npm start 启动命令
-        createCommand += ' npm start';
+        // 使用镜像默认的启动命令（Dockerfile 中的 CMD）
+        // 这样会执行 startup.sh，确保数据库迁移正确运行
+        logInfo('使用镜像默认启动命令（startup.sh）');
 
         // 检查并删除可能存在的旧容器
         const finalListResult = await execSSHCommand(ssh, "docker ps -a --format '{{.Names}}'");
