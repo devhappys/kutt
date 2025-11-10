@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - .github/**
       - "!.github/workflows/docker-build-development"
+      - "!.github/workflows/deploy_image.js"
   workflow_dispatch:
 
 permissions:
