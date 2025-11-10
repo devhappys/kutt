@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("node:crypto");
+const { now: tzNow } = require("../utils/timezone");
 
 const utils = require("../utils");
 const redis = require("../redis");
@@ -281,7 +282,7 @@ async function update(match, update) {
   
   await knex("links")
     .where(match)
-    .update({ ...update, updated_at: utils.dateToUTC(new Date()) });
+    .update({ ...update, updated_at: tzNow() });
 
   const updated_links = await knex("links")
     .select(selectable)

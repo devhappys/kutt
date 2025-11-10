@@ -314,8 +314,12 @@ function AddPasskeyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       const initRes = await authApi.passkey.registerInit()
       const options = initRes.data?.data || initRes.data
 
+      if (!options || typeof options !== 'object' || !options.challenge) {
+        throw new Error('Invalid registration options received from server')
+      }
+
       // Step 2: Prompt user to create credential
-      const credential = await startRegistration(options)
+      const credential = await startRegistration({ optionsJSON: options })
 
       // Step 3: Verify credential with server
       await authApi.passkey.registerVerify({ credential, name: passkeyName.trim() })
@@ -323,7 +327,10 @@ function AddPasskeyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       toast.success('Passkey registered successfully!')
       onSuccess()
     } catch (error: any) {
-      console.error('Passkey registration error:', error)
+      // Log to console for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Passkey registration error:', error)
+      }
       
       if (error.name === 'NotAllowedError') {
         toast.error('Passkey registration was cancelled')

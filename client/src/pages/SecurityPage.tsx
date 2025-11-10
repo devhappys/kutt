@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { securityApi } from '@/lib/api'
+import { useAuthStore } from '@/stores/authStore'
 import { 
   Shield, Plus, Trash2, X, Globe, Zap, ArrowRight, 
   ArrowLeft, AlertTriangle, CheckCircle,
@@ -137,13 +138,14 @@ export default function SecurityPage() {
 // ==================== IP Rules Section ====================
 function IPRulesSection({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const [showModal, setShowModal] = useState(false)
   const [editingRule, setEditingRule] = useState<any>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ip-rules', linkId],
     queryFn: () => securityApi.getIPRules(linkId),
-    enabled: !!linkId,
+    enabled: !!linkId && isAuthenticated,
   })
 
   const deleteRule = useMutation({
@@ -512,12 +514,13 @@ function EditIPRuleModal({ rule, onClose }: { rule: any; onClose: () => void }) 
 // ==================== Geo Restrictions Section ====================
 function GeoRestrictionsSection({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const [showModal, setShowModal] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['geo-restrictions', linkId],
     queryFn: () => securityApi.getGeoRestrictions(linkId),
-    enabled: !!linkId,
+    enabled: !!linkId && isAuthenticated,
   })
 
   const deleteRestriction = useMutation({
@@ -768,12 +771,13 @@ function GeoRestrictionModal({ linkId, onClose }: { linkId: string; onClose: () 
 
 function RateLimitsSection({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const [showModal, setShowModal] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['rate-limits', linkId],
     queryFn: () => securityApi.getRateLimits(linkId),
-    enabled: !!linkId,
+    enabled: !!linkId && isAuthenticated,
   })
 
   const deleteLimit = useMutation({
@@ -984,12 +988,13 @@ function RateLimitModal({ linkId, onClose }: { linkId: string; onClose: () => vo
 
 function SmartRedirectsSection({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const [showModal, setShowModal] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['redirect-rules', linkId],
     queryFn: () => securityApi.getRedirectRules(linkId),
-    enabled: !!linkId,
+    enabled: !!linkId && isAuthenticated,
   })
 
   const deleteRule = useMutation({

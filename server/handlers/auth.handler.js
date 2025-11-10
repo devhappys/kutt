@@ -141,9 +141,20 @@ async function createAdminUser(req, res) {
 }
 
 async function login(req, res) {
-  const token = utils.signToken(req.user);
-  
   let user = req.user;
+  
+  // Check if user has Passkey enabled (as 2FA)
+  if (user.passkey_enabled) {
+    // Require Passkey authentication before completing login
+    // Normalize email to ensure consistency with passkey authentication
+    return res.status(200).send({
+      requires_passkey: true,
+      email: user.email.toLowerCase(),
+      message: "Passkey authentication required."
+    });
+  }
+  
+  const token = utils.signToken(user);
   
   // Generate API key if user doesn't have one
   if (!user.apikey) {

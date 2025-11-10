@@ -1,9 +1,10 @@
 const { isAfter, subDays, subHours, set, format } = require("date-fns");
 
 const utils = require("../utils");
-const redis = require("../redis");
 const knex = require("../knex");
+const helpers = require("../handlers/helpers.handler");
 const env = require("../env");
+const { now: tzNow, formatDateForDB } = require("../utils/timezone");
 
 async function add(params) {
   const data = {
@@ -12,7 +13,7 @@ async function add(params) {
     referrer: params.referrer.toLowerCase()
   };
 
-  const nowUTC = new Date().toISOString();
+  const nowUTC = formatDateForDB();
   const truncatedNow = nowUTC.substring(0, 10) + " " + nowUTC.substring(11, 14) + "00:00";
 
   return knex.transaction(async (trx) => {
@@ -41,7 +42,7 @@ async function add(params) {
         .increment(`os_${data.os}`, 1)
         .increment("total", 1)
         .update({
-          updated_at: utils.dateToUTC(new Date()),
+          updated_at: tzNow(),
           countries: JSON.stringify({
             ...countries,
             [data.country]: (countries[data.country] ?? 0) + 1
@@ -99,7 +100,7 @@ async function find(match, total) {
   };
 
   const visitsStream = knex("visits").where(match).stream();
-  const now = new Date();
+  const now = new Date(); // Keep as Date object for date-fns calculations
 
   const periods = utils.getStatsPeriods(now);
 
@@ -179,7 +180,7 @@ async function find(match, total) {
       views: stats.lastWeek.views,
       total: stats.lastWeek.total
     },
-    updatedAt: new Date()
+    updatedAt: new Date() // Keep as Date object for response
   };
 
   if (match.link_id && env.REDIS_ENABLED) {

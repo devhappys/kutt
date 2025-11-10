@@ -170,7 +170,10 @@ async function authenticateInit(req, res) {
   }
 
   try {
-    const user = await query.user.find({ email });
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const user = await query.user.find({ email: normalizedEmail });
     if (!user) {
       // Don't reveal if user exists
       throw new CustomError('Authentication failed.', 401);
@@ -187,18 +190,32 @@ async function authenticateInit(req, res) {
 
     const options = await generateAuthenticationOptions({
       rpID,
-      allowCredentials: userPasskeys.map(passkey => ({
-        id: Buffer.from(passkey.credential_id, 'base64url'),
-        type: 'public-key',
-        transports: passkey.transports ? passkey.transports.split(',') : undefined,
-      })),
+      allowCredentials: userPasskeys.map(passkey => {
+        // Handle credential_id - could be string or Buffer
+        let credentialId;
+        if (typeof passkey.credential_id === 'string') {
+          credentialId = passkey.credential_id;
+        } else if (Buffer.isBuffer(passkey.credential_id)) {
+          credentialId = passkey.credential_id.toString('base64url');
+        } else {
+          // Fallback: try to convert to string
+          credentialId = String(passkey.credential_id);
+        }
+        
+        return {
+          id: credentialId,
+          type: 'public-key',
+          transports: passkey.transports ? passkey.transports.split(',') : undefined,
+        };
+      }),
       userVerification: 'preferred',
     });
 
-    // Store challenge temporarily
-    challenges.set(`auth_${email}`, {
+    // Store challenge temporarily using normalized email for consistency
+    challenges.set(`auth_${normalizedEmail}`, {
       challenge: options.challenge,
       userId: user.id,
+      email: normalizedEmail, // Store normalized email for verification
     });
 
     return res.status(200).send(options);
@@ -220,12 +237,15 @@ async function authenticateVerify(req, res) {
   }
 
   try {
-    const challengeData = challenges.get(`auth_${email}`);
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const challengeData = challenges.get(`auth_${normalizedEmail}`);
     if (!challengeData) {
-      throw new CustomError('Challenge not found or expired.', 400);
+      throw new CustomError('Challenge not found or expired. Please try again.', 400);
     }
 
-    const { challenge, userId } = challengeData;
+    const { challenge, userId, email: storedEmail } = challengeData;
 
     // Find the passkey - credential.id is already base64url encoded
     const passkey = await query.passkey.findByCredentialId(credential.id);
@@ -271,7 +291,7 @@ async function authenticateVerify(req, res) {
       const apikey = nanoid(40);
       const updatedUser = await query.user.update({ id: user.id }, { apikey });
 
-      challenges.delete(`auth_${email}`);
+      challenges.delete(`auth_${normalizedEmail}`);
 
       return res.status(200).send({
         token,
@@ -280,7 +300,7 @@ async function authenticateVerify(req, res) {
       });
     }
 
-    challenges.delete(`auth_${email}`);
+    challenges.delete(`auth_${normalizedEmail}`);
 
     return res.status(200).send({
       token,
@@ -289,7 +309,9 @@ async function authenticateVerify(req, res) {
     });
   } catch (error) {
     console.error('Passkey authentication verify error:', error);
-    challenges.delete(`auth_${email}`);
+    // Use normalized email for cleanup
+    const normalizedEmail = email ? email.toLowerCase().trim() : '';
+    challenges.delete(`auth_${normalizedEmail}`);
     throw new CustomError(error.message || 'Failed to verify passkey authentication.', 401);
   }
 }

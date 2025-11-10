@@ -28,7 +28,9 @@ api.interceptors.response.use(
   (error) => {
     // Handle network errors
     if (!error.response) {
-      console.error('Network Error:', error.message)
+      if (import.meta.env.DEV) {
+        console.error('Network Error:', error.message)
+      }
       // Check if it's a connection error
       if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
         error.userMessage = 'Cannot connect to server. Please check if the backend is running.'
@@ -44,12 +46,16 @@ api.interceptors.response.use(
       window.location.href = '/login'
     } else if (status === 502) {
       error.userMessage = 'Backend server is unavailable (502). Please check if the server is running.'
-      console.error('502 Bad Gateway - Backend server not responding')
+      if (import.meta.env.DEV) {
+        console.error('502 Bad Gateway - Backend server not responding')
+      }
     } else if (status === 503) {
       error.userMessage = error.response?.data?.message || 'Service temporarily unavailable'
     } else if (status >= 500) {
       error.userMessage = 'Server error. Please try again later.'
-      console.error('Server Error:', error.response?.data)
+      if (import.meta.env.DEV) {
+        console.error('Server Error:', error.response?.data)
+      }
     }
     
     return Promise.reject(error)

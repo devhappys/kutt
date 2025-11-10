@@ -32,6 +32,17 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Ensure apiKey in localStorage matches the store
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          const storedApiKey = localStorage.getItem('apiKey')
+          if (storedApiKey && state.apiKey !== storedApiKey) {
+            state.apiKey = storedApiKey
+          }
+          // Update isAuthenticated based on apiKey presence
+          state.isAuthenticated = !!state.apiKey && !!state.user
+        }
+      },
     }
   )
 )

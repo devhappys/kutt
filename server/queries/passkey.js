@@ -1,13 +1,12 @@
 const knex = require("../knex");
+const { now } = require("../utils/timezone");
 
 /**
  * Create a new passkey
  */
 const add = async (passkeyData) => {
-  const [passkey] = await knex("passkeys")
-    .insert(passkeyData)
-    .returning("*");
-  return passkey;
+  const [id] = await knex("passkeys").insert(passkeyData);
+  return knex("passkeys").where({ id }).first();
 };
 
 /**
@@ -40,15 +39,9 @@ const findByCredentialId = async (credentialId) => {
 /**
  * Update passkey
  */
-const update = async (match, update) => {
-  const [passkey] = await knex("passkeys")
-    .where(match)
-    .update({
-      ...update,
-      updated_at: new Date().toISOString()
-    })
-    .returning("*");
-  return passkey;
+const update = async (match, updateData) => {
+  await knex("passkeys").where(match).update(updateData);
+  return knex("passkeys").where(match).first();
 };
 
 /**
@@ -59,7 +52,7 @@ const updateLastUsed = async (id, counter) => {
     .where({ id })
     .update({
       counter,
-      last_used: new Date().toISOString()
+      last_used: now()
     });
 };
 

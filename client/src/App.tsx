@@ -14,6 +14,12 @@ import Layout from '@/components/Layout'
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const apiKey = useAuthStore((state) => state.apiKey)
+
+  // Debug: log authentication state in development
+  if (import.meta.env.DEV) {
+    console.log('Auth state:', { isAuthenticated, hasApiKey: !!apiKey })
+  }
 
   return (
     <Routes>
@@ -25,7 +31,7 @@ function App() {
       {/* Protected routes */}
       <Route
         path="/app"
-        element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}
       >
         <Route index element={<Dashboard />} />
         <Route path="links" element={<LinksPage />} />

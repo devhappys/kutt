@@ -12,7 +12,7 @@ const router = Router();
 router.get(
   "/links/:linkId/ip-rules",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.getIPRules)
 );
 
@@ -20,7 +20,7 @@ router.get(
 router.post(
   "/links/:linkId/ip-rules",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.addIPRule)
 );
 
@@ -28,7 +28,7 @@ router.post(
 router.patch(
   "/ip-rules/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.updateIPRule)
 );
 
@@ -36,7 +36,7 @@ router.patch(
 router.delete(
   "/ip-rules/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.deleteIPRule)
 );
 
@@ -46,7 +46,7 @@ router.delete(
 router.get(
   "/links/:linkId/geo-restrictions",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.getGeoRestrictions)
 );
 
@@ -54,7 +54,7 @@ router.get(
 router.post(
   "/links/:linkId/geo-restrictions",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.addGeoRestriction)
 );
 
@@ -62,7 +62,7 @@ router.post(
 router.delete(
   "/geo-restrictions/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.deleteGeoRestriction)
 );
 
@@ -72,7 +72,7 @@ router.delete(
 router.get(
   "/links/:linkId/rate-limits",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.getRateLimitRules)
 );
 
@@ -80,7 +80,7 @@ router.get(
 router.post(
   "/links/:linkId/rate-limits",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.addRateLimitRule)
 );
 
@@ -88,7 +88,7 @@ router.post(
 router.delete(
   "/rate-limits/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.deleteRateLimitRule)
 );
 
@@ -98,7 +98,7 @@ router.delete(
 router.get(
   "/links/:linkId/redirect-rules",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.getRedirectRules)
 );
 
@@ -106,7 +106,7 @@ router.get(
 router.post(
   "/links/:linkId/redirect-rules",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.addRedirectRule)
 );
 
@@ -114,7 +114,7 @@ router.post(
 router.patch(
   "/redirect-rules/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.updateRedirectRule)
 );
 
@@ -122,7 +122,7 @@ router.patch(
 router.delete(
   "/redirect-rules/:id",
   asyncHandler(auth.apikey),
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(security.deleteRedirectRule)
 );
 

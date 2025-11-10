@@ -69,6 +69,8 @@ const spec = {
   DEBUG_SQL: bool({ default: false }),
   PASSKEY_RP_ID: str({ default: "localhost", example: "yourdomain.com" }),
   PASSKEY_ORIGIN: str({ default: "http://localhost:3000", example: "https://yourdomain.com" }),
+  TIMEZONE: str({ default: "Asia/Shanghai", example: "America/New_York" }),
+  TIMEZONE_OFFSET: num({ default: 8, example: -5 }),
 };
 
 for (const key in spec) {

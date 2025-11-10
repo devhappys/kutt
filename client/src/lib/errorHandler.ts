@@ -51,7 +51,9 @@ export async function checkServerConnection(apiBaseUrl: string): Promise<boolean
     })
     return response.ok
   } catch (error) {
-    console.error('Server connection check failed:', error)
+    if (import.meta.env.DEV) {
+      console.error('Server connection check failed:', error)
+    }
     return false
   }
 }

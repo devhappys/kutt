@@ -42,7 +42,8 @@ router.post(
 
 router.post(
   "/change-password",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   validators.changePassword,
   asyncHandler(helpers.verify),
   helpers.rateLimit({ window: 60, limit: 5 }),
@@ -51,7 +52,8 @@ router.post(
 
 router.post(
   "/change-email",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   auth.featureAccess([env.MAIL_ENABLED]),
   validators.changeEmail,
   asyncHandler(helpers.verify),
@@ -61,7 +63,8 @@ router.post(
 
 router.post(
   "/apikey",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 10 }),
   asyncHandler(auth.generateApiKey)
 );
@@ -87,14 +90,16 @@ router.post(
 // Two-Factor Authentication Routes
 router.post(
   "/2fa/setup",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 5 }),
   asyncHandler(twofa.setup)
 );
 
 router.post(
   "/2fa/verify",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   validators.twofaVerify,
   asyncHandler(helpers.verify),
   helpers.rateLimit({ window: 60, limit: 10 }),
@@ -103,7 +108,8 @@ router.post(
 
 router.post(
   "/2fa/disable",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   validators.twofaDisable,
   asyncHandler(helpers.verify),
   helpers.rateLimit({ window: 60, limit: 5 }),
@@ -128,28 +134,32 @@ router.post(
 
 router.post(
   "/2fa/regenerate-backup-codes",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 5 }),
   asyncHandler(twofa.regenerateBackupCodes)
 );
 
 router.get(
   "/2fa/status",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(twofa.getStatus)
 );
 
 // Passkey (WebAuthn) Routes
 router.post(
   "/passkey/register/init",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 10 }),
   asyncHandler(passkey.registerInit)
 );
 
 router.post(
   "/passkey/register/verify",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 10 }),
   asyncHandler(passkey.registerVerify)
 );
@@ -168,27 +178,31 @@ router.post(
 
 router.get(
   "/passkey/list",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(passkey.list)
 );
 
 router.delete(
   "/passkey/:id",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 5 }),
   asyncHandler(passkey.remove)
 );
 
 router.patch(
   "/passkey/:id/rename",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   helpers.rateLimit({ window: 60, limit: 10 }),
   asyncHandler(passkey.rename)
 );
 
 router.get(
   "/passkey/status",
-  asyncHandler(auth.jwt),
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
   asyncHandler(passkey.getStatus)
 );
 

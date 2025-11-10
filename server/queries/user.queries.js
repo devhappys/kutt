@@ -3,6 +3,7 @@ const { randomUUID } = require("node:crypto");
 
 const { ROLES } = require("../consts");
 const utils = require("../utils");
+const { now: tzNow, formatDateForDB, getTimezoneDate } = require("../utils/timezone");
 const redis = require("../redis");
 const knex = require("../knex");
 const env = require("../env");
@@ -43,13 +44,13 @@ async function add(params, user) {
     ...(params.role && { role: params.role }),
     ...(params.verified !== undefined && { verified: params.verified }),
     verification_token: randomUUID(),
-    verification_expires: utils.dateToUTC(addMinutes(new Date(), 60))
+    verification_expires: formatDateForDB(addMinutes(new Date(), 60))
   };
   
   if (user) {
     await knex("users")
       .where("id", user.id)
-      .update({ ...data, updated_at: utils.dateToUTC(new Date()) });
+      .update({ ...data, updated_at: tzNow() });
   } else {
     await knex("users").insert(data);
   }
@@ -81,7 +82,7 @@ async function update(match, update, methods) {
       });
     }
     
-    await updateQuery.update({ ...update, updated_at: utils.dateToUTC(new Date()) });
+    await updateQuery.update({ ...update, updated_at: tzNow() });
     const updated_user = await trx("users").where("id", user.id).first();
 
     return { user, updated_user };

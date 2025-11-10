@@ -44,12 +44,18 @@ export default function StatsPage() {
   const link = linkStatsData?.data
   const realtime = realtimeData?.data
 
-  // Debug logging
+  // Handle errors with user-friendly messages
   if (linkError) {
-    console.error('Link stats error:', linkError)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Link stats error:', linkError)
+    }
+    toast.error('Failed to load link statistics')
   }
   if (realtimeError) {
-    console.error('Realtime stats error:', realtimeError)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Realtime stats error:', realtimeError)
+    }
+    toast.error('Failed to load realtime statistics')
   }
 
   const handleExport = async (format: 'csv' | 'json') => {

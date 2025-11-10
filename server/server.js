@@ -6,6 +6,7 @@ const responseTime = require("response-time");
 const passport = require("passport");
 const express = require("express");
 const helmet = require("helmet");
+const cors = require("cors");
 const path = require("node:path");
 const hbs = require("hbs");
 
@@ -57,6 +58,42 @@ app.use(compression({
   }
 }));
 
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow localhost on any port
+    if (env.NODE_ENV !== 'production') {
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        return callback(null, true);
+      }
+      // In development, allow any origin with a warning
+      console.warn(`CORS: Allowing unknown origin in development: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Production: only allow the default domain
+    const allowedOrigins = [
+      `https://${env.DEFAULT_DOMAIN}`,
+      `http://${env.DEFAULT_DOMAIN}`,
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.error(`CORS: Blocked origin in production: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'Accept'],
+  exposedHeaders: ['X-Response-Time'],
+};
+
+app.use(cors(corsOptions));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' })); // Limit request body size

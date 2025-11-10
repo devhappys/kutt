@@ -2,6 +2,7 @@ const redis = require("../redis");
 const utils = require("../utils");
 const knex = require("../knex");
 const env = require("../env");
+const { now: tzNow } = require("../utils/timezone");
 
 async function find(match) {
   if (match.address && env.REDIS_ENABLED) {
@@ -41,7 +42,7 @@ async function add(params) {
   if (id) {
     await knex("domains").where("id", id).update({
       ...newDomain,
-      updated_at: params.updated_at || utils.dateToUTC(new Date())
+      updated_at: params.updated_at || tzNow()
     });
   } else {
     // Mysql and sqlite don't support returning but return the inserted id by default
@@ -70,7 +71,7 @@ async function update(match, update) {
   
   await knex("domains")
     .where(match)
-    .update({ ...update, updated_at: utils.dateToUTC(new Date()) });
+    .update({ ...update, updated_at: tzNow() });
 
   const updated_domains = await knex("domains").select("*").where(match);
 

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
-import { Link2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Link2, Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 import PasskeyLogin from '@/components/PasskeyLogin'
 
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth)
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+  const [requiresPasskey, setRequiresPasskey] = useState(false)
+  const [passkeyEmail, setPasskeyEmail] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +22,18 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (response) => {
-      const { user, apikey } = response.data
+      const data = response.data
+      
+      // Check if Passkey authentication is required
+      if (data.requires_passkey) {
+        setRequiresPasskey(true)
+        setPasskeyEmail(data.email)
+        toast.success('密码验证成功！请使用 Passkey 完成登录')
+        return
+      }
+      
+      // Normal login without Passkey
+      const { user, apikey } = data
       setAuth(user, apikey)
       toast.success('Login successful!')
       navigate('/app')
@@ -67,8 +80,10 @@ export default function LoginPage() {
         navigate('/app')
       })
       .catch((error) => {
-        console.error('Failed to fetch user data:', error)
-        toast.error('Failed to fetch user data')
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch user data:', error)
+        }
+        toast.error('Failed to fetch user data. Please try again.')
       })
   }
 
@@ -189,8 +204,37 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Passkey Login - Only show in login mode */}
-          {isLogin && (
+          {/* Passkey Verification - Only show when required after password login */}
+          {isLogin && requiresPasskey && (
+            <>
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-700 mb-3">
+                  <Shield className="h-5 w-5" />
+                  <span className="font-medium">需要 Passkey 验证</span>
+                </div>
+                <p className="text-sm text-blue-600 mb-4">
+                  密码验证成功！您的账户已启用 Passkey 作为第二因素认证，请完成生物识别验证。
+                </p>
+                <PasskeyLogin
+                  email={passkeyEmail}
+                  onSuccess={handlePasskeySuccess}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequiresPasskey(false)
+                    setPasskeyEmail('')
+                  }}
+                  className="mt-3 text-sm text-gray-600 hover:text-gray-900 underline"
+                >
+                  取消并返回登录
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Passkey Direct Login - Only show in login mode when not requiring verification */}
+          {isLogin && !requiresPasskey && (
             <>
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">

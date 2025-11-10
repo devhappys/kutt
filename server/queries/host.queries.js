@@ -1,6 +1,7 @@
 const redis = require("../redis");
 const utils = require("../utils");
 const knex = require("../knex");
+const { now: tzNow } = require("../utils/timezone");
 const env = require("../env");
 
 async function find(match) {
@@ -37,7 +38,7 @@ async function add(params) {
   if (id) {
     await knex("hosts").where("id", id).update({
       ...newHost,
-      updated_at: params.updated_at || utils.dateToUTC(new Date())
+      updated_at: params.updated_at || tzNow()
     });
   } else {
     // Mysql and sqlite don't support returning but return the inserted id by default

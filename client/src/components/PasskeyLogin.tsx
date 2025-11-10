@@ -18,19 +18,35 @@ export default function PasskeyLogin({ email, onSuccess }: PasskeyLoginProps) {
       return
     }
 
+    // Normalize email for consistency with backend
+    const normalizedEmail = email.toLowerCase().trim()
+
     setIsAuthenticating(true)
 
     try {
       // Step 1: Get authentication options from server
-      const initRes = await authApi.passkey.authenticateInit({ email })
+      const initRes = await authApi.passkey.authenticateInit({ email: normalizedEmail })
       const options = initRes.data
 
+      if (!options || typeof options !== 'object' || !options.challenge) {
+        throw new Error('Invalid authentication options received from server')
+      }
+
+      // Debug: log options in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Authentication options:', {
+          rpID: options.rpId,
+          challenge: options.challenge?.substring(0, 20) + '...',
+          allowCredentials: options.allowCredentials?.length || 0
+        })
+      }
+
       // Step 2: Prompt user to authenticate
-      const credential = await startAuthentication(options)
+      const credential = await startAuthentication({ optionsJSON: options })
 
       // Step 3: Verify credential with server
       const verifyRes = await authApi.passkey.authenticateVerify({
-        email,
+        email: normalizedEmail,
         credential,
       })
 
@@ -45,7 +61,10 @@ export default function PasskeyLogin({ email, onSuccess }: PasskeyLoginProps) {
       toast.success('Signed in successfully with passkey!')
       onSuccess(token, apikey)
     } catch (error: any) {
-      console.error('Passkey authentication error:', error)
+      // Log to console for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Passkey authentication error:', error)
+      }
 
       if (error.name === 'NotAllowedError') {
         toast.error('Passkey authentication was cancelled')

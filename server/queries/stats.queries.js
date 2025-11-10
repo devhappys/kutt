@@ -9,6 +9,7 @@ const {
 } = require("date-fns");
 const knex = require("../knex");
 const utils = require("../utils");
+const { getTimezoneDate } = require("../utils/timezone");
 
 // Add detailed visit record
 async function addDetailedVisit(data) {
