@@ -1231,7 +1231,7 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
   // Clean up blob URL when format changes or component unmounts
   useEffect(() => {
     return () => {
-      if (qrData && qrData.startsWith('blob:')) {
+      if (qrData && typeof qrData === 'string' && qrData.startsWith('blob:')) {
         URL.revokeObjectURL(qrData)
       }
     }
@@ -1262,7 +1262,7 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
   })
 
   const handleDownload = () => {
-    if (!qrData) return
+    if (!qrData || typeof qrData !== 'string') return
     const a = document.createElement('a')
     a.href = qrData
     
