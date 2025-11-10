@@ -119,24 +119,18 @@ app.use("/images", express.static("custom/images", staticOptions));
 app.use("/css", express.static("custom/css", { ...staticOptions, extensions: ["css"] }));
 // app.use(express.static("static", staticOptions)); // Disabled: only ../client/dist should serve frontend
 
-// serve frontend SPA with caching
-app.use("/app", express.static(path.join(__dirname, "../client/dist"), {
-  maxAge: 0, // Don't cache index.html
+// serve frontend SPA assets (js, css, images) with caching
+app.use("/assets", express.static(path.join(__dirname, "../client/dist/assets"), {
+  maxAge: env.NODE_ENV === 'production' ? '1y' : 0,
   etag: true,
   lastModified: true,
-  setHeaders: (res, path) => {
-    if (path.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-    } else {
+  immutable: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.match(/\.(js|css|woff2|woff|ttf|svg|png|jpg|jpeg|gif|ico)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));
-
-// SPA fallback - handle client-side routing
-app.get("/app/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-});
 
 app.use(passport.initialize());
 app.use(locals.isHTML);
@@ -160,6 +154,11 @@ app.use("/", routes.render);
 // handle api requests
 app.use("/api/v2", routes.api);
 app.use("/api", routes.api);
+
+// SPA fallback - serve index.html for all /app routes (client-side routing)
+app.get("/app*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 // finally, redirect the short link to the target
 app.get("/:id", asyncHandler(links.redirect));
