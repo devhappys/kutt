@@ -31,13 +31,28 @@ exports.up = async function(knex) {
         table.boolean("passkey_enabled").notNullable().defaultTo(false);
       });
     }
+    
+    // Add passkey_2fa_required flag to control if passkey is required as 2FA
+    const hasPasskey2FARequired = await knex.schema.hasColumn("users", "passkey_2fa_required");
+    if (!hasPasskey2FARequired) {
+      await knex.schema.table("users", table => {
+        table.boolean("passkey_2fa_required").notNullable().defaultTo(true);
+      });
+    }
   }
 };
 
 exports.down = async function(knex) {
-  // Remove passkey_enabled from users table
+  // Remove passkey fields from users table
   const hasUsersTable = await knex.schema.hasTable("users");
   if (hasUsersTable) {
+    const hasPasskey2FARequired = await knex.schema.hasColumn("users", "passkey_2fa_required");
+    if (hasPasskey2FARequired) {
+      await knex.schema.table("users", table => {
+        table.dropColumn("passkey_2fa_required");
+      });
+    }
+    
     const hasPasskeyEnabled = await knex.schema.hasColumn("users", "passkey_enabled");
     if (hasPasskeyEnabled) {
       await knex.schema.table("users", table => {

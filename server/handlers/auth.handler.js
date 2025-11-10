@@ -90,8 +90,11 @@ async function signup(req, res) {
   const salt = await bcrypt.genSalt(12);
   const password = await bcrypt.hash(req.body.password, salt);
   
+  // Normalize email to lowercase for consistency
+  const normalizedEmail = req.body.email.toLowerCase().trim();
+  
   const user = await query.user.add(
-    { email: req.body.email, password },
+    { email: normalizedEmail, password },
     req.user
   );
   
@@ -122,8 +125,11 @@ async function createAdminUser(req, res) {
   const salt = await bcrypt.genSalt(12);
   const password = await bcrypt.hash(req.body.password, salt);
 
+  // Normalize email to lowercase for consistency
+  const normalizedEmail = req.body.email.toLowerCase().trim();
+
   const user = await query.user.add({
-    email: req.body.email, 
+    email: normalizedEmail, 
     password, 
     role: ROLES.ADMIN, 
     verified: true 
@@ -143,8 +149,8 @@ async function createAdminUser(req, res) {
 async function login(req, res) {
   let user = req.user;
   
-  // Check if user has Passkey enabled (as 2FA)
-  if (user.passkey_enabled) {
+  // Check if user has Passkey enabled and 2FA is required
+  if (user.passkey_enabled && user.passkey_2fa_required) {
     // Require Passkey authentication before completing login
     // Normalize email to ensure consistency with passkey authentication
     return res.status(200).send({
@@ -255,8 +261,11 @@ async function generateApiKey(req, res) {
 }
 
 async function resetPassword(req, res) {
+  // Normalize email to lowercase for consistency
+  const normalizedEmail = req.body.email.toLowerCase().trim();
+  
   const user = await query.user.update(
-    { email: req.body.email },
+    { email: normalizedEmail },
     {
       reset_password_token: randomUUID(),
       reset_password_expires: utils.dateToUTC(addMinutes(new Date(), 30))
@@ -317,7 +326,10 @@ async function changeEmailRequest(req, res) {
     throw new CustomError(error, 401);
   }
   
-  const user = await query.user.find({ email });
+  // Normalize email to lowercase for consistency
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  const user = await query.user.find({ email: normalizedEmail });
   
   if (user) {
     const error = "Can't use this email address.";
@@ -328,14 +340,14 @@ async function changeEmailRequest(req, res) {
   const updatedUser = await query.user.update(
     { id: req.user.id },
     {
-      change_email_address: email,
+      change_email_address: normalizedEmail,
       change_email_token: randomUUID(),
       change_email_expires: utils.dateToUTC(addMinutes(new Date(), 30))
     }
   );
   
   if (updatedUser) {
-    await mail.changeEmail({ ...updatedUser, email });
+    await mail.changeEmail({ ...updatedUser, email: normalizedEmail });
   }
 
   const message = "A verification link has been sent to the requested email address."

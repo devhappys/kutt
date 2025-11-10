@@ -32,12 +32,15 @@ async function registerInit(req, res) {
     // Get existing passkeys for this user
     const userPasskeys = await query.passkey.getByUserId(user.id);
 
+    // Normalize email for consistency
+    const normalizedEmail = user.email.toLowerCase();
+
     const options = await generateRegistrationOptions({
       rpName,
       rpID,
       userID: Uint8Array.from(user.id.toString(), c => c.charCodeAt(0)),
-      userName: user.email,
-      userDisplayName: user.email,
+      userName: normalizedEmail,
+      userDisplayName: normalizedEmail,
       // Don't prompt users for additional information about the authenticator
       attestationType: 'none',
       // Prevent re-registration of existing passkeys
@@ -430,10 +433,38 @@ async function getStatus(req, res) {
     return res.status(200).send({
       enabled: user.passkey_enabled || false,
       count: passkeyCount,
+      twofa_required: user.passkey_2fa_required !== undefined ? user.passkey_2fa_required : true,
     });
   } catch (error) {
     console.error('Passkey status error:', error);
     throw new CustomError('Failed to retrieve passkey status.', 500);
+  }
+}
+
+/**
+ * Toggle Passkey 2FA requirement
+ */
+async function toggle2FARequired(req, res) {
+  const user = req.user;
+  const { required } = req.body;
+
+  if (typeof required !== 'boolean') {
+    throw new CustomError('Required field must be a boolean.', 400);
+  }
+
+  try {
+    await query.user.update(
+      { id: user.id },
+      { passkey_2fa_required: required }
+    );
+
+    return res.status(200).send({
+      message: `Passkey 2FA ${required ? 'enabled' : 'disabled'} successfully.`,
+      twofa_required: required,
+    });
+  } catch (error) {
+    console.error('Toggle passkey 2FA error:', error);
+    throw new CustomError('Failed to toggle passkey 2FA requirement.', 500);
   }
 }
 
@@ -446,4 +477,5 @@ module.exports = {
   remove,
   rename,
   getStatus,
+  toggle2FARequired,
 };

@@ -43,6 +43,7 @@ export default function PasskeyManager() {
   const passkeys: Passkey[] = passkeysData?.passkeys || []
   const isEnabled = statusData?.enabled || false
   const passkeyCount = statusData?.count || 0
+  const is2FARequired = statusData?.twofa_required !== undefined ? statusData.twofa_required : true
 
   // Delete passkey mutation
   const deletePasskey = useMutation({
@@ -74,6 +75,20 @@ export default function PasskeyManager() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to rename passkey')
+    },
+  })
+
+  // Toggle 2FA requirement mutation
+  const toggle2FA = useMutation({
+    mutationFn: async (required: boolean) => {
+      await authApi.passkey.toggle2FA({ required })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['passkey-status'] })
+      toast.success('Passkey 2FA settings updated')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update settings')
     },
   })
 
@@ -127,12 +142,44 @@ export default function PasskeyManager() {
       )}
 
       {isEnabled && passkeyCount > 0 && (
-        <div className="card bg-green-50 border-green-200">
-          <p className="text-sm text-green-800">
-            <Shield className="h-4 w-4 inline mr-2" />
-            Passkey authentication is enabled. You can use any of your registered passkeys to sign in.
-          </p>
-        </div>
+        <>
+          <div className="card bg-green-50 border-green-200">
+            <p className="text-sm text-green-800">
+              <Shield className="h-4 w-4 inline mr-2" />
+              Passkey authentication is enabled. You can use any of your registered passkeys to sign in.
+            </p>
+          </div>
+
+          {/* 2FA Requirement Toggle */}
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-900 mb-1">
+                  强制 Passkey 二次验证 (2FA)
+                </h4>
+                <p className="text-sm text-gray-600">
+                  {is2FARequired 
+                    ? '启用后，每次登录都需要密码 + Passkey 验证'
+                    : '关闭后，可以选择仅用密码或仅用 Passkey 登录'
+                  }
+                </p>
+              </div>
+              <button
+                onClick={() => toggle2FA.mutate(!is2FARequired)}
+                disabled={toggle2FA.isPending}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  is2FARequired ? 'bg-primary-600' : 'bg-gray-300'
+                } ${toggle2FA.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    is2FARequired ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Passkeys List */}

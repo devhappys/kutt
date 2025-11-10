@@ -339,6 +339,9 @@ export const authApi = {
       api.patch(`/auth/passkey/${id}/rename`, data),
     
     getStatus: () => api.get('/auth/passkey/status'),
+    
+    toggle2FA: (data: { required: boolean }) =>
+      api.post('/auth/passkey/toggle-2fa', data),
   },
 }
 

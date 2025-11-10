@@ -206,4 +206,12 @@ router.get(
   asyncHandler(passkey.getStatus)
 );
 
+router.post(
+  "/passkey/toggle-2fa",
+  asyncHandler(auth.apikey),
+  asyncHandler(auth.jwtLoose),
+  helpers.rateLimit({ window: 60, limit: 10 }),
+  asyncHandler(passkey.toggle2FARequired)
+);
+
 module.exports = router;
