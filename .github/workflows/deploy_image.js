@@ -347,9 +347,11 @@ async function recreateContainer(ssh, oldContainerName, newImageUrl) {
 
         // 继承环境变量
         const envVars = config.Env || [];
+        const skipEnvPrefixes = ['PATH=', 'HOSTNAME=', 'HOME='];
         for (const env of envVars) {
-            // 跳过系统默认环境变量
-            if (!env.startsWith('PATH=') && !env.startsWith('HOSTNAME=')) {
+            // 跳过Docker自动设置的系统默认环境变量，保留所有应用和网络相关的环境变量
+            const shouldSkip = skipEnvPrefixes.some(prefix => env.startsWith(prefix));
+            if (!shouldSkip) {
                 createCommand += `-e "${env}" `;
             }
         }
@@ -403,6 +405,16 @@ async function recreateContainer(ssh, oldContainerName, newImageUrl) {
                 const containerPort = port.split('/')[0];
                 createCommand += `-p ${hostIp}:${hostPort}:${containerPort} `;
             }
+        }
+        
+        // 继承发布所有端口
+        if (hostConfig.PublishAllPorts) {
+            createCommand += `--publish-all `;
+        }
+        
+        // 继承 MAC 地址
+        if (config.MacAddress && config.MacAddress !== '') {
+            createCommand += `--mac-address ${config.MacAddress} `;
         }
 
         // 继承挂载卷和权限（兼容性处理）
@@ -463,16 +475,53 @@ async function recreateContainer(ssh, oldContainerName, newImageUrl) {
             }
         }
 
-        // 继承网络模式
-        if (hostConfig.NetworkMode && hostConfig.NetworkMode !== 'default') {
+        // 继承网络配置
+        const networks = networkSettings.Networks || {};
+        const networkNames = Object.keys(networks);
+        
+        if (hostConfig.NetworkMode && hostConfig.NetworkMode !== 'default' && hostConfig.NetworkMode !== 'bridge') {
+            // 使用 NetworkMode（如 host、none 或自定义网络）
             createCommand += `--network ${hostConfig.NetworkMode} `;
-        } else {
-            // 继承网络设置
-            const networks = networkSettings.Networks || {};
-            for (const networkName of Object.keys(networks)) {
-                if (networkName !== 'bridge') {
-                    createCommand += `--network ${networkName} `;
+            
+            // 继承网络别名
+            const networkConfig = networks[hostConfig.NetworkMode];
+            if (networkConfig && networkConfig.Aliases && networkConfig.Aliases.length > 0) {
+                for (const alias of networkConfig.Aliases) {
+                    createCommand += `--network-alias ${alias} `;
                 }
+            }
+        } else if (networkNames.length > 0) {
+            // 使用 NetworkSettings 中的网络配置
+            for (const networkName of networkNames) {
+                const networkConfig = networks[networkName];
+                createCommand += `--network ${networkName} `;
+                
+                // 继承网络别名
+                if (networkConfig.Aliases && networkConfig.Aliases.length > 0) {
+                    for (const alias of networkConfig.Aliases) {
+                        createCommand += `--network-alias ${alias} `;
+                    }
+                }
+                
+                // 继承 IPv4 地址配置（如果有静态IP）
+                if (networkConfig.IPAddress && networkConfig.IPAddress !== '') {
+                    createCommand += `--ip ${networkConfig.IPAddress} `;
+                }
+                
+                // 继承 IPv6 地址配置
+                if (networkConfig.GlobalIPv6Address && networkConfig.GlobalIPv6Address !== '') {
+                    createCommand += `--ip6 ${networkConfig.GlobalIPv6Address} `;
+                }
+                
+                // 只处理第一个网络，多网络需要容器创建后再连接
+                break;
+            }
+        }
+        
+        // 继承容器链接（传统方式，已不推荐但仍需支持）
+        if (hostConfig.Links && hostConfig.Links.length > 0) {
+            for (const link of hostConfig.Links) {
+                createCommand += `--link ${link} `;
             }
         }
 
