@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { linksApi, tagsApi, qrcodeApi } from '@/lib/api'
-import { 
-  Plus, Search, Copy, QrCode, BarChart3, Trash2, 
+import {
+  Plus, Search, Copy, QrCode, BarChart3, Trash2,
   ExternalLink, X, Download, Edit, Lock, Calendar, RefreshCw
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
@@ -58,8 +58,8 @@ export default function LinksPage() {
   // Filter by tags
   let filteredLinks = selectedTags.length > 0
     ? links.filter((link: any) =>
-        link.tags?.some((tag: any) => selectedTags.includes(tag.id))
-      )
+      link.tags?.some((tag: any) => selectedTags.includes(tag.id))
+    )
     : links
 
   // Sort links
@@ -79,7 +79,7 @@ export default function LinksPage() {
         aVal = new Date(a.created_at).getTime()
         bVal = new Date(b.created_at).getTime()
     }
-    
+
     const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0
     return sortOrder === 'asc' ? comparison : -comparison
   })
@@ -141,7 +141,7 @@ export default function LinksPage() {
               className="input pl-10"
             />
           </div>
-          
+
           {/* Sort Controls */}
           <div className="flex gap-2">
             <select
@@ -162,7 +162,7 @@ export default function LinksPage() {
             </button>
           </div>
         </div>
-        
+
         {/* Tag Filters */}
         <div className="flex flex-wrap gap-2">
           {tags.map((tag: any) => (
@@ -175,11 +175,10 @@ export default function LinksPage() {
                     : [...prev, tag.id]
                 )
               }
-              className={`badge cursor-pointer transition-all ${
-                selectedTags.includes(tag.id)
+              className={`badge cursor-pointer transition-all ${selectedTags.includes(tag.id)
                   ? 'ring-2 ring-offset-2'
                   : 'opacity-60 hover:opacity-100'
-              }`}
+                }`}
               style={{
                 backgroundColor: tag.color + '20',
                 color: tag.color,
@@ -244,7 +243,7 @@ export default function LinksPage() {
               </label>
             </div>
           )}
-          
+
           {filteredLinks.map((link: any) => (
             <LinkCard
               key={link.id}
@@ -295,9 +294,8 @@ export default function LinksPage() {
 
 function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit }: any) {
   return (
-    <div className={`card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn overflow-hidden ${
-      selected ? 'ring-2 ring-primary-500 bg-primary-50' : ''
-    }`}>
+    <div className={`card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 group animate-scaleIn overflow-hidden ${selected ? 'ring-2 ring-primary-500 bg-primary-50' : ''
+      }`}>
       <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         {/* Checkbox */}
         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -309,69 +307,69 @@ function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit
             onClick={(e) => e.stopPropagation()}
           />
           <div className="flex-1 min-w-0">
-          <div className="flex items-center flex-wrap gap-2 mb-2">
-            <h3 className="font-semibold text-lg break-all">/{link.address}</h3>
-            {link.password && (
-              <span className="badge bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                <Lock className="h-3 w-3" />
-                Protected
-              </span>
-            )}
-            {link.expire_in && (
-              <span className="badge bg-purple-100 text-purple-800 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Expires
-              </span>
-            )}
-            {link.banned && (
-              <span className="badge bg-red-100 text-red-800">Banned</span>
-            )}
-            {link.max_clicks && (
-              <span className="badge bg-blue-100 text-blue-800 flex items-center gap-1" title={`Max ${link.max_clicks} clicks per ${link.click_limit_period || 'total'}`}>
-                🎯 {link.click_count_period || 0}/{link.max_clicks}
-              </span>
-            )}
-            {link.redirect_type === '301' && (
-              <span className="badge bg-green-100 text-green-800">301 Permanent</span>
-            )}
-            {link.redirect_type === '307' && (
-              <span className="badge bg-green-100 text-green-800">307</span>
-            )}
-            {link.public_stats && (
-              <span className="badge bg-indigo-100 text-indigo-800">📊 Public Stats</span>
-            )}
-            {!link.enable_analytics && (
-              <span className="badge bg-gray-100 text-gray-800">Analytics Off</span>
-            )}
-          </div>
-          <a
-            href={link.target}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-600 hover:text-primary-600 flex items-center gap-1 max-w-full"
-          >
-            <span className="truncate flex-1 min-w-0">{link.target}</span>
-            <ExternalLink className="h-3 w-3 flex-shrink-0" />
-          </a>
-          {link.description && (
-            <p className="text-sm text-gray-500 mt-2 break-words">{link.description}</p>
-          )}
-          {link.tags && link.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {link.tags.map((tag: any) => (
-                <span
-                  key={tag.id}
-                  className="badge"
-                  style={{ backgroundColor: tag.color + '20', color: tag.color }}
-                >
-                  {tag.name}
+            <div className="flex items-center flex-wrap gap-2 mb-2">
+              <h3 className="font-semibold text-lg break-all">/{link.address}</h3>
+              {link.password && (
+                <span className="badge bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Protected
                 </span>
-              ))}
+              )}
+              {link.expire_in && (
+                <span className="badge bg-purple-100 text-purple-800 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Expires
+                </span>
+              )}
+              {link.banned && (
+                <span className="badge bg-red-100 text-red-800">Banned</span>
+              )}
+              {link.max_clicks && (
+                <span className="badge bg-blue-100 text-blue-800 flex items-center gap-1" title={`Max ${link.max_clicks} clicks per ${link.click_limit_period || 'total'}`}>
+                  🎯 {link.click_count_period || 0}/{link.max_clicks}
+                </span>
+              )}
+              {link.redirect_type === '301' && (
+                <span className="badge bg-green-100 text-green-800">301 Permanent</span>
+              )}
+              {link.redirect_type === '307' && (
+                <span className="badge bg-green-100 text-green-800">307</span>
+              )}
+              {link.public_stats && (
+                <span className="badge bg-indigo-100 text-indigo-800">📊 Public Stats</span>
+              )}
+              {!link.enable_analytics && (
+                <span className="badge bg-gray-100 text-gray-800">Analytics Off</span>
+              )}
             </div>
-          )}
+            <a
+              href={link.target}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-600 hover:text-primary-600 flex items-center gap-1 max-w-full"
+            >
+              <span className="truncate flex-1 min-w-0">{link.target}</span>
+              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            </a>
+            {link.description && (
+              <p className="text-sm text-gray-500 mt-2 break-words">{link.description}</p>
+            )}
+            {link.tags && link.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {link.tags.map((tag: any) => (
+                  <span
+                    key={tag.id}
+                    className="badge"
+                    style={{ backgroundColor: tag.color + '20', color: tag.color }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        
+
         <div className="flex items-center flex-wrap gap-2 sm:ml-4 flex-shrink-0">
           <button
             onClick={() => onCopy(link.address, link.domain)}
@@ -410,7 +408,7 @@ function LinkCard({ link, selected, onSelect, onCopy, onDelete, onShowQR, onEdit
           </button>
         </div>
       </div>
-      
+
       <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
         <span>{link.visit_count} visits</span>
         <span>{formatRelativeTime(link.created_at)}</span>
@@ -568,9 +566,8 @@ function CreateLinkModal({ tags, onClose, onSuccess }: any) {
                         : [...prev.tag_ids, tag.id],
                     }))
                   }
-                  className={`badge cursor-pointer ${
-                    formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2' : ''
-                  }`}
+                  className={`badge cursor-pointer ${formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2' : ''
+                    }`}
                   style={{
                     backgroundColor: tag.color + '20',
                     color: tag.color,
@@ -805,7 +802,7 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
       const currentIds = link.tags?.map((t: any) => t.id) || []
       const toAdd = tag_ids.filter(id => !currentIds.includes(id))
       const toRemove = currentIds.filter((id: number) => !tag_ids.includes(id))
-      
+
       if (toAdd.length > 0) {
         await tagsApi.addToLink(link.id, toAdd)
       }
@@ -817,23 +814,23 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       // Update basic fields
       const updateData: any = {}
-      
+
       if (formData.address !== link.address) updateData.address = formData.address
       if (formData.target !== link.target) updateData.target = formData.target
       if (formData.description !== link.description) updateData.description = formData.description
       if (formData.expire_in !== link.expire_in) updateData.expire_in = formData.expire_in
-      
+
       // Handle password
       if (formData.removePassword) {
         updateData.password = null
       } else if (formData.password) {
         updateData.password = formData.password
       }
-      
+
       // Handle advanced features
       if (formData.max_clicks !== link.max_clicks) {
         updateData.max_clicks = formData.max_clicks || null
@@ -868,30 +865,30 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
       if (formData.utm_medium !== link.utm_medium) {
         updateData.utm_medium = formData.utm_medium || null
       }
-      
+
       const hasBasicChanges = Object.keys(updateData).length > 0
-      const hasTagChanges = JSON.stringify(formData.tag_ids.sort()) !== 
-                           JSON.stringify((link.tags?.map((t: any) => t.id) || []).sort())
-      
+      const hasTagChanges = JSON.stringify(formData.tag_ids.sort()) !==
+        JSON.stringify((link.tags?.map((t: any) => t.id) || []).sort())
+
       if (!hasBasicChanges && !hasTagChanges) {
         toast.error('No changes to update')
         return
       }
-      
+
       // Update link fields
       if (hasBasicChanges) {
         await updateLink.mutateAsync(updateData)
       }
-      
+
       // Update tags
       if (hasTagChanges) {
         await updateTags.mutateAsync(formData.tag_ids)
       }
-      
+
       if (!hasBasicChanges && hasTagChanges) {
         toast.success('Tags updated!')
       }
-      
+
       onSuccess()
     } catch (error) {
       // Error already handled by mutation
@@ -991,15 +988,15 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
                   className="input"
                   placeholder={link.password ? "Enter new password" : "Enter password"}
                 />
-                
+
                 {link.password && (
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="removePassword"
                       checked={formData.removePassword}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         removePassword: e.target.checked,
                         password: e.target.checked ? '' : formData.password
                       })}
@@ -1042,9 +1039,8 @@ function EditLinkModal({ link, tags, onClose, onSuccess }: any) {
                           : [...prev.tag_ids, tag.id],
                       }))
                     }
-                    className={`badge cursor-pointer transition-all ${
-                      formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2' : 'opacity-60 hover:opacity-100'
-                    }`}
+                    className={`badge cursor-pointer transition-all ${formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2' : 'opacity-60 hover:opacity-100'
+                      }`}
                     style={{
                       backgroundColor: tag.color + '20',
                       color: tag.color,
@@ -1265,17 +1261,17 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
     if (!qrData || typeof qrData !== 'string') return
     const a = document.createElement('a')
     a.href = qrData
-    
+
     // Set proper file extension based on format
     let extension = 'png'
     if (format === 'svg') extension = 'svg'
     else if (format === 'dataurl') extension = 'png'
-    
+
     a.download = `qr-${linkId}.${extension}`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    
+
     toast.success('QR Code downloaded!')
   }
 
@@ -1297,9 +1293,8 @@ function QRCodeModal({ linkId, onClose }: { linkId: string; onClose: () => void 
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
-                  className={`btn-secondary flex-1 ${
-                    format === f ? 'ring-2 ring-primary-600' : ''
-                  }`}
+                  className={`btn-secondary flex-1 ${format === f ? 'ring-2 ring-primary-600' : ''
+                    }`}
                 >
                   {f.toUpperCase()}
                 </button>

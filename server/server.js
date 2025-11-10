@@ -80,7 +80,7 @@ const staticOptions = {
 
 app.use("/images", express.static("custom/images", staticOptions));
 app.use("/css", express.static("custom/css", { ...staticOptions, extensions: ["css"] }));
-app.use(express.static("static", staticOptions));
+// app.use(express.static("static", staticOptions)); // Disabled: only ../client/dist should serve frontend
 
 // serve frontend SPA with caching
 app.use("/app", express.static(path.join(__dirname, "../client/dist"), {
